@@ -1,0 +1,10 @@
+{
+  "name": "Daybook",
+  "version_number": "0.3.1",
+  "website_url": "https://github.com/GKJ-Super-Fantasy-Kingdom/Daybook",
+  "description": "Track daily resource gains and spending in Super Fantasy Kingdom. Hold Alt to view dawn, current, and net balances.",
+  "dependencies": [
+    "BepInEx-BepInExPack-5.4.2305",
+    "BepInEx-HideManagerGameObject_Config-5.4.2304"
+  ]
+}
