@@ -1,6 +1,6 @@
 Daybook adds a daily balance beneath your kingdom’s resource bar. If you started the day with 3 boards and have 1 left, a red **−2** appears directly under the boards icon. You can see what you’ve gained or spent while keeping the map in view.
 
-![Human Kingdom resource strip showing a gain of three boards](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/Daybook/main/docs/screenshots/01-human-compact.png)
+![Human Kingdom resource strip showing a gain of three boards](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/daybook/main/docs/screenshots/01-human-compact.png)
 
 ## Hold Alt to open the ledger
 
@@ -15,7 +15,7 @@ Hold **Alt** to see the full ledger. **Dawn** is the amount you had that morning
 | Currency | Coins and faith. |
 | Progression | Shards, stars, and super metal. |
 
-![Earlier Undead Kingdom ledger at 1.5× UI scale](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/Daybook/main/docs/screenshots/04-undead-ledger-scale-1.5.png)
+![Earlier Undead Kingdom ledger at 1.5× UI scale](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/daybook/main/docs/screenshots/04-undead-ledger-scale-1.5.png)
 
 ## Continue a saved kingdom
 
