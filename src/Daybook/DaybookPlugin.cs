@@ -35,10 +35,14 @@ namespace Daybook
         private void Awake()
         {
             showOverlay = Config.Bind("Display", "ShowOverlay", true, "Show resource balances and changes since dawn.");
+            ControllerLedger.Plugin = this;
             GameCheckpoints.Plugin = this;
             patches = new Harmony("sfk.daybook.checkpoints");
             patches.PatchAll(typeof(GameCheckpoints.Load));
             patches.PatchAll(typeof(GameCheckpoints.Save));
+            patches.PatchAll(typeof(ControllerLedger.OlderAction));
+            patches.PatchAll(typeof(ControllerLedger.NewerAction));
+            patches.PatchAll(typeof(ControllerLedger.HudAction));
             GameManager.OnGameInit += CloseDay;
             GameManager.BeforeSave += CaptureAndFlush;
             ResourceManager.OnResourceAmountChanged += ResourceChanged;
@@ -50,6 +54,7 @@ namespace Daybook
         private void OnDestroy()
         {
             CloseDay();
+            ControllerLedger.Plugin = null;
             GameCheckpoints.Plugin = null;
             patches?.UnpatchSelf();
             GameManager.OnGameInit -= CloseDay;
@@ -64,6 +69,7 @@ namespace Daybook
         private void SetDetailedView(bool enabled)
         {
             detailedCity = enabled ? CityManager.Instance : null;
+            if (!enabled) SelectHistory(-1);
         }
 
         private void OnApplicationQuit()
@@ -152,15 +158,26 @@ namespace Daybook
                 dirty |= ledger.Read(type);
         }
 
-        private bool BrowseHistory(bool expanded)
+        internal bool CanPageWithController()
         {
-            int target = historyIndex;
-            var keys = Keyboard.current;
-            if (!expanded) target = -1;
-            else if (keys != null && keys.pageUpKey.wasPressedThisFrame)
-                target = Math.Min(previous.Length - 1, historyIndex + 1);
-            else if (keys != null && keys.pageDownKey.wasPressedThisFrame)
-                target = Math.Max(-1, historyIndex - 1);
+            var player = ControllerLedger.ActivePlayer();
+            var menu = PauseMenuManger.Instance;
+            return player != null && previous.Length > 0 && showOverlay.Value &&
+                panel != null && panel.gameObject.activeInHierarchy &&
+                detailedCity != null && detailedCity == CityManager.Instance &&
+                player.actions.FindAction(ControllerLedger.Details)?.IsPressed() == true &&
+                (menu == null || (!menu.InMenu() && !menu.IsOpen())) &&
+                UIManager.Instance != null && UIManager.Instance.IsWorldInteractable();
+        }
+
+        internal void PageHistory(int step)
+        {
+            int target = Math.Max(-1, Math.Min(previous.Length - 1, historyIndex + step));
+            if (SelectHistory(target)) nextRefresh = 0;
+        }
+
+        private bool SelectHistory(int target)
+        {
             if (target == historyIndex) return false;
             history = null;
             int step = target > historyIndex ? 1 : -1;
@@ -235,16 +252,23 @@ namespace Daybook
             if (opening)
                 panel.gameObject.SetActive(true);
             bool expanded = detailedCity != null && detailedCity == CityManager.Instance;
-            bool changedView = panel.SyncView(expanded);
-            changedView |= BrowseHistory(expanded);
+            var player = ControllerLedger.ActivePlayer();
+            if (player != null)
+                expanded &= player.actions.FindAction(ControllerLedger.Details)?.IsPressed() == true;
+            bool changedView = panel.SyncView(expanded, player != null);
+            var keys = Keyboard.current;
+            if (!expanded) changedView |= SelectHistory(-1);
+            else if (keys != null && keys.pageUpKey.wasPressedThisFrame) PageHistory(1);
+            else if (keys != null && keys.pageDownKey.wasPressedThisFrame) PageHistory(-1);
             if (!opening && !changedView && Time.unscaledTime < nextRefresh)
                 return;
 
             nextRefresh = Time.unscaledTime + 0.5f;
             string caption = history == null ? (tracking ? $"Day {day}" : "Waiting for dawn")
                 : $"Saved day {history.Day} ({historyIndex + 1}/{previous.Length})";
-            if (expanded && previous.Length > 0) caption += "   PgUp older / PgDn newer";
+            if (expanded && player == null && previous.Length > 0) caption += "   PgUp older / PgDn newer";
             panel.Refresh(history, caption);
+            if (player != null) panel.UpdateControllerHints(player, previous.Length > 0);
         }
     }
 }

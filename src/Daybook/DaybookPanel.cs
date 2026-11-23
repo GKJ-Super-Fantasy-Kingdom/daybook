@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using SuperFantasyKingdom.UI;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.InputSystem;
 
 namespace Daybook
 {
@@ -25,7 +26,16 @@ namespace Daybook
         private RectTransform frame, strip, book, viewport;
         private Text fontSource, historyCaption;
         private float bookHeight;
-        private bool detailed;
+        private bool detailed, controller;
+        private ButtonHint open, older, newer, close;
+
+        private sealed class ButtonHint
+        {
+            internal RectTransform Root;
+            internal Image Icon;
+            internal Text Label;
+            internal string Action, Verb;
+        }
 
         internal static DaybookPanel Attach(UIHeader header, ResourceLedger ledger)
         {
@@ -58,7 +68,7 @@ namespace Daybook
             panel.strip = panel.Inset("Daily changes");
             panel.book = panel.Inset("Daily ledger");
             panel.BuildRows(ledger);
-            panel.SetView(false);
+            panel.SetView(false, false);
             return panel;
         }
 
@@ -126,6 +136,50 @@ namespace Daybook
             historyCaption.color = Gold;
             Place(historyCaption.rectTransform, 0, 1, y, 26);
             bookHeight = y + 36;
+            open = MakeHint(strip, ControllerLedger.Details, "Hold for ledger", 0.19f, 1, 26);
+            older = MakeHint(book, ControllerLedger.Older, "Older", 0.03f, 0.32f, y + 26);
+            newer = MakeHint(book, ControllerLedger.Newer, "Newer", 0.33f, 0.62f, y + 26);
+            close = MakeHint(book, ControllerLedger.Details, "Release to close", 0.63f, 1, y + 26);
+        }
+
+        private ButtonHint MakeHint(RectTransform parent, string action, string verb,
+            float left, float right, float top)
+        {
+            var root = (RectTransform)new GameObject(verb, typeof(RectTransform)).transform;
+            root.SetParent(parent, false);
+            Place(root, left, right, top, 26);
+            var icon = GraphicChild<Image>(root, "Button");
+            icon.preserveAspect = true;
+            Place(icon.rectTransform, 0, 0, 0, 24, 0, -26);
+            var label = Label(root, verb, 20, TextAnchor.MiddleLeft);
+            return new ButtonHint { Root = root, Icon = icon, Label = label, Action = action, Verb = verb };
+        }
+
+        internal void UpdateControllerHints(PlayerInput player, bool hasHistory)
+        {
+            if (!detailed)
+            {
+                ShowHint(open, player);
+                return;
+            }
+            older.Root.gameObject.SetActive(hasHistory);
+            newer.Root.gameObject.SetActive(hasHistory);
+            if (hasHistory)
+            {
+                ShowHint(older, player);
+                ShowHint(newer, player);
+            }
+            ShowHint(close, player);
+        }
+
+        private static void ShowHint(ButtonHint hint, PlayerInput player)
+        {
+            var sprite = ControllerLedger.Glyph(player, hint.Action, out string binding);
+            hint.Icon.sprite = sprite;
+            hint.Icon.enabled = sprite != null;
+            hint.Label.text = sprite == null && !string.IsNullOrEmpty(binding)
+                ? binding + "  " + hint.Verb : hint.Verb;
+            Place(hint.Label.rectTransform, 0, 1, 0, 26, sprite != null ? 29 : 0, 2);
         }
 
         private void ColumnTitle(string title, float left, float right)
@@ -142,11 +196,11 @@ namespace Daybook
             return label;
         }
 
-        internal bool SyncView(bool expanded)
+        internal bool SyncView(bool expanded, bool usingController)
         {
-            bool changed = expanded != detailed;
+            bool changed = expanded != detailed || controller != usingController;
             if (changed)
-                SetView(expanded);
+                SetView(expanded, usingController);
             if (expanded && viewport != null)
             {
                 // Fit the expanded ledger on shorter windows in the same pixel space as the HUD.
@@ -154,19 +208,24 @@ namespace Daybook
                 float unit = Mathf.Abs(viewport.InverseTransformVector(frame.parent.TransformVector(Vector3.up)).y);
                 float room = top - viewport.rect.yMin - 8;
                 if (room > 0 && unit > 0)
-                    frame.localScale = Vector3.one * Mathf.Min(1, room / (bookHeight * unit));
+                    frame.localScale = Vector3.one * Mathf.Min(1, room / (frame.sizeDelta.y * unit));
             }
             return changed;
         }
 
-        private void SetView(bool expanded)
+        private void SetView(bool expanded, bool usingController)
         {
             detailed = expanded;
+            controller = usingController;
+            open.Root.gameObject.SetActive(controller);
+            older.Root.gameObject.SetActive(controller);
+            newer.Root.gameObject.SetActive(controller);
+            close.Root.gameObject.SetActive(controller);
             strip.gameObject.SetActive(!expanded);
             book.gameObject.SetActive(expanded);
             frame.localScale = Vector3.one;
             frame.pivot = new Vector2(1, 1);
-            frame.sizeDelta = new Vector2(expanded ? 140 : 0, expanded ? bookHeight : 36);
+            frame.sizeDelta = new Vector2(expanded ? 140 : 0, (expanded ? bookHeight : 36) + (controller ? 26 : 0));
             frame.anchoredPosition = new Vector2(0, -4);
         }
 

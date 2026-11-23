@@ -1,5 +1,6 @@
 ## 0.4.0
 
+- Added controller history navigation and in-game button prompts for opening, paging, and closing the ledger.
 - Added Earned and Spent to the detailed resource ledger. The compact strip still shows net change.
 - Saved daily records by game profile, kingdom, and run. Continue restores matching checkpoints, and replayed days retain their earlier records.
 - Added history browsing with Alt + Page Up and Page Down. Tracking continues when the overlay is hidden.

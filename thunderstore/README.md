@@ -17,6 +17,16 @@ Hold **Alt** to see the full ledger. **Dawn** is the amount you had that morning
 
 ![Earlier Undead Kingdom ledger at 1.5× UI scale](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/daybook/main/docs/screenshots/04-undead-ledger-scale-1.5.png)
 
+## Controller controls
+
+| Action | Xbox | PlayStation |
+| --- | --- | --- |
+| Open the detailed ledger | Hold RT | Hold R2 |
+| Browse older / newer records | While holding RT, press LB / RB | While holding R2, press L1 / R1 |
+| Return to the live resource strip | Release RT | Release R2 |
+
+These are the default controls. Daybook follows your in-game detail, pause, and speed bindings and uses the game's button icons when available. The shoulder buttons page only while browsing a ledger with saved records. Keyboard players can hold **Alt** and use **Page Up** or **Page Down**.
+
 ## Continue a saved kingdom
 
 Hold **Alt** and press **Page Up** to browse earlier records from the same run. **Page Down** moves toward today. Release Alt to return to the live resource strip.

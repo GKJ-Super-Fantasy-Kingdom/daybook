@@ -8,6 +8,16 @@ Daybook adds a daily resource ledger to Super Fantasy Kingdom. A strip beneath t
 
 On the [Daybook Thunderstore listing](https://thunderstore.io/c/super-fantasy-kingdom/p/GKJ/Daybook/), choose **Install with App**, select your Super Fantasy Kingdom profile, and choose **Start modded**. To hide the panel, set `ShowOverlay = false` in the profile’s `BepInEx/config/sfk.daybook.cfg`.
 
+## Controller controls
+
+| Action | Xbox | PlayStation |
+| --- | --- | --- |
+| Open the detailed ledger | Hold RT | Hold R2 |
+| Browse older / newer records | While holding RT, press LB / RB | While holding R2, press L1 / R1 |
+| Return to the live resource strip | Release RT | Release R2 |
+
+These are the default controls. Daybook follows your in-game detail, pause, and speed bindings and uses the game's button icons when available. The shoulder buttons page only while browsing a ledger with saved records. Keyboard players can hold **Alt** and use **Page Up** or **Page Down**.
+
 ## Continuing a run
 
 Hold **Alt** and press **Page Up** to read earlier records from this run. **Page Down** moves toward the live day. Release Alt to return to the live strip. **Earned** and **Spent** count observed increases and decreases in available stock. Earning and spending 8 boards shows 8 in both columns and 0 net.
