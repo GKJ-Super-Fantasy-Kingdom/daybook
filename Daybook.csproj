@@ -1,12 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFramework>netstandard2.1</TargetFramework>
-    <Version>0.3.1</Version>
+    <Version>0.4.0</Version>
     <GameDir Condition="'$(GameDir)' == ''">D:\SteamLibrary\steamapps\common\Super Fantasy Kingdom</GameDir>
     <ProfileDir Condition="'$(ProfileDir)' == ''">$(APPDATA)\Thunderstore Mod Manager\DataFolder\SuperFantasyKingdom\profiles\Daybook Dev</ProfileDir>
     <ManagedDir>$(GameDir)\Super Fantasy Kingdom_Data\Managed</ManagedDir>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Remove="tests/**/*.cs" />
+    <Reference Include="0Harmony" HintPath="$(ProfileDir)\BepInEx\core\0Harmony.dll" Private="false" />
+    <Reference Include="Unity.InputSystem" HintPath="$(ManagedDir)\Unity.InputSystem.dll" Private="false" />
+    <Reference Include="UnityEngine.JSONSerializeModule" HintPath="$(ManagedDir)\UnityEngine.JSONSerializeModule.dll" Private="false" />
     <Reference Include="BepInEx" HintPath="$(ProfileDir)\BepInEx\core\BepInEx.dll" Private="false" />
     <Reference Include="Assembly-CSharp" HintPath="$(ManagedDir)\Assembly-CSharp.dll" Private="false" />
     <Reference Include="UnityEngine" HintPath="$(ManagedDir)\UnityEngine.dll" Private="false" />

@@ -8,8 +8,7 @@ namespace Daybook
         internal readonly ResourceType Type;
         internal readonly ResourceData Data;
         internal readonly string Group;
-        internal int? Dawn;
-        internal int? Now;
+        internal Balance Balance = new Balance();
 
         internal LedgerEntry(ResourceType type, ResourceData data, string group)
         {
@@ -55,15 +54,35 @@ namespace Daybook
                 Entries.Add(new LedgerEntry(type, data, group));
         }
 
-        internal void Read(bool dawn = false)
+        internal bool Read(ResourceType? changed = null)
         {
+            bool dirty = false;
             foreach (var entry in Entries)
             {
-                entry.Now = entry.Type == ResourceType.Faith && FaithManager.Instance == null
-                    ? (int?)null
-                    : Kingdom.GetResourceAvailableAmount(entry.Type);
-                if (dawn)
-                    entry.Dawn = entry.Now;
+                if (changed.HasValue && entry.Type != changed.Value) continue;
+                int? amount = entry.Type == ResourceType.Faith && FaithManager.Instance == null
+                    ? (int?)null : Kingdom.GetResourceAvailableAmount(entry.Type);
+                dirty |= entry.Balance.Observe(amount);
+            }
+            return dirty;
+        }
+
+        internal DayRecord Snapshot(int day)
+        {
+            var record = new DayRecord { Day = day };
+            foreach (var entry in Entries)
+                record.Rows.Add((int)entry.Type, entry.Balance.Copy());
+            return record;
+        }
+
+        internal void BeginDay(int day, DayRecord saved)
+        {
+            bool restore = saved != null && saved.Matches(day, Snapshot(day).Rows);
+            foreach (var entry in Entries)
+            {
+                int? amount = entry.Balance.Now;
+                entry.Balance = restore ? saved.Rows[(int)entry.Type].Copy()
+                    : new Balance { Dawn = amount, Now = amount };
             }
         }
     }

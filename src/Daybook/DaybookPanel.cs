@@ -15,14 +15,15 @@ namespace Daybook
         private sealed class Row
         {
             internal LedgerEntry Entry;
-            internal Text Compact, Dawn, Now, Net;
+            internal Text Compact, Dawn, Earned, Spent, Now, Net;
             internal int? LastDawn, LastNow;
+            internal long LastEarned, LastSpent;
             internal bool Painted;
         }
 
         private readonly List<Row> rows = new List<Row>();
         private RectTransform frame, strip, book, viewport;
-        private Text fontSource;
+        private Text fontSource, historyCaption;
         private float bookHeight;
         private bool detailed;
 
@@ -75,9 +76,11 @@ namespace Daybook
 
         private void BuildRows(ResourceLedger ledger)
         {
-            ColumnTitle("Dawn", 0.48f, 0.64f);
-            ColumnTitle("Now", 0.64f, 0.80f);
-            ColumnTitle("Net", 0.80f, 1);
+            ColumnTitle("Dawn", 0.33f, 0.46f);
+            ColumnTitle("Earned", 0.46f, 0.62f);
+            ColumnTitle("Spent", 0.62f, 0.76f);
+            ColumnTitle("Now", 0.76f, 0.88f);
+            ColumnTitle("Net", 0.88f, 1);
             float y = 0;
             string group = null;
             for (int i = 0; i < ledger.Entries.Count; i++)
@@ -87,7 +90,7 @@ namespace Daybook
                 {
                     group = entry.Group;
                     var heading = Label(book, group, 24, TextAnchor.MiddleLeft);
-                    Place(heading.rectTransform, 0, 0.48f, y, 26, 5, 2);
+                    Place(heading.rectTransform, 0, 0.33f, y, 26, 5, 2);
                     heading.color = Gold;
                     y += 26;
                 }
@@ -110,14 +113,19 @@ namespace Daybook
                 if (string.IsNullOrEmpty(name))
                     name = entry.Type == SuperFantasyKingdom.ResourceType.SuperMetal ? "Super Metal" : entry.Type.ToString();
                 var title = Label(book, name, 23, TextAnchor.MiddleLeft);
-                Place(title.rectTransform, 0, 0.48f, y, 24, 30, 2);
-                row.Dawn = Number("Dawn", 0.48f, 0.64f, y);
-                row.Now = Number("Now", 0.64f, 0.80f, y);
-                row.Net = Number("Net", 0.80f, 1, y);
+                Place(title.rectTransform, 0, 0.33f, y, 24, 30, 2);
+                row.Dawn = Number("Dawn", 0.33f, 0.46f, y);
+                row.Earned = Number("Earned", 0.46f, 0.62f, y);
+                row.Spent = Number("Spent", 0.62f, 0.76f, y);
+                row.Now = Number("Now", 0.76f, 0.88f, y);
+                row.Net = Number("Net", 0.88f, 1, y);
                 rows.Add(row);
                 y += 24;
             }
-            bookHeight = y + 10;
+            historyCaption = Label(book, "", 21, TextAnchor.MiddleCenter);
+            historyCaption.color = Gold;
+            Place(historyCaption.rectTransform, 0, 1, y, 26);
+            bookHeight = y + 36;
         }
 
         private void ColumnTitle(string title, float left, float right)
@@ -157,19 +165,29 @@ namespace Daybook
             strip.gameObject.SetActive(!expanded);
             book.gameObject.SetActive(expanded);
             frame.localScale = Vector3.one;
-            frame.sizeDelta = new Vector2(0, expanded ? bookHeight : 36);
+            frame.pivot = new Vector2(1, 1);
+            frame.sizeDelta = new Vector2(expanded ? 140 : 0, expanded ? bookHeight : 36);
+            frame.anchoredPosition = new Vector2(0, -4);
         }
 
-        internal void Refresh()
+        internal void Refresh(DayRecord history, string caption)
         {
+            historyCaption.text = caption;
             foreach (var row in rows)
             {
-                var entry = row.Entry;
-                if (row.Painted && row.LastDawn == entry.Dawn && row.LastNow == entry.Now)
+                var entry = row.Entry.Balance;
+                if (history != null && !history.Rows.TryGetValue((int)row.Entry.Type, out entry))
+                    entry = new Balance();
+                if (row.Painted && row.LastDawn == entry.Dawn && row.LastNow == entry.Now &&
+                    row.LastEarned == entry.Earned && row.LastSpent == entry.Spent)
                     continue;
                 row.Painted = true;
                 row.LastDawn = entry.Dawn;
                 row.LastNow = entry.Now;
+                row.LastEarned = entry.Earned;
+                row.LastSpent = entry.Spent;
+                row.Earned.text = entry.Dawn.HasValue ? entry.Earned.ToString() : "\u2013";
+                row.Spent.text = entry.Dawn.HasValue ? entry.Spent.ToString() : "\u2013";
                 long? net = (long?)entry.Now - entry.Dawn;
                 string delta = net?.ToString("+0;-0;0") ?? "–";
                 Color32 color = net > 0 ? Gain : net < 0 ? Loss : (Color32)Color.white;
