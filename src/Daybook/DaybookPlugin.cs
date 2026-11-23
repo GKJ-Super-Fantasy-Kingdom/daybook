@@ -255,7 +255,8 @@ namespace Daybook
             var player = ControllerLedger.ActivePlayer();
             if (player != null)
                 expanded &= player.actions.FindAction(ControllerLedger.Details)?.IsPressed() == true;
-            bool changedView = panel.SyncView(expanded, player != null);
+            bool showHistoryHints = expanded && player != null && previous.Length > 0;
+            bool changedView = panel.SyncView(expanded, showHistoryHints);
             var keys = Keyboard.current;
             if (!expanded) changedView |= SelectHistory(-1);
             else if (keys != null && keys.pageUpKey.wasPressedThisFrame) PageHistory(1);
@@ -268,7 +269,7 @@ namespace Daybook
                 : $"Saved day {history.Day} ({historyIndex + 1}/{previous.Length})";
             if (expanded && player == null && previous.Length > 0) caption += "   PgUp older / PgDn newer";
             panel.Refresh(history, caption);
-            if (player != null) panel.UpdateControllerHints(player, previous.Length > 0);
+            if (showHistoryHints) panel.UpdateControllerHints(player);
         }
     }
 }

@@ -26,8 +26,8 @@ namespace Daybook
         private RectTransform frame, strip, book, viewport;
         private Text fontSource, historyCaption;
         private float bookHeight;
-        private bool detailed, controller;
-        private ButtonHint open, older, newer, close;
+        private bool detailed, historyHintsVisible;
+        private ButtonHint older, newer;
 
         private sealed class ButtonHint
         {
@@ -136,10 +136,8 @@ namespace Daybook
             historyCaption.color = Gold;
             Place(historyCaption.rectTransform, 0, 1, y, 26);
             bookHeight = y + 36;
-            open = MakeHint(strip, ControllerLedger.Details, "Hold for ledger", 0.19f, 1, 26);
-            older = MakeHint(book, ControllerLedger.Older, "Older", 0.03f, 0.32f, y + 26);
-            newer = MakeHint(book, ControllerLedger.Newer, "Newer", 0.33f, 0.62f, y + 26);
-            close = MakeHint(book, ControllerLedger.Details, "Release to close", 0.63f, 1, y + 26);
+            older = MakeHint(book, ControllerLedger.Older, "Older", 0.18f, 0.50f, y + 26);
+            newer = MakeHint(book, ControllerLedger.Newer, "Newer", 0.55f, 0.90f, y + 26);
         }
 
         private ButtonHint MakeHint(RectTransform parent, string action, string verb,
@@ -155,21 +153,10 @@ namespace Daybook
             return new ButtonHint { Root = root, Icon = icon, Label = label, Action = action, Verb = verb };
         }
 
-        internal void UpdateControllerHints(PlayerInput player, bool hasHistory)
+        internal void UpdateControllerHints(PlayerInput player)
         {
-            if (!detailed)
-            {
-                ShowHint(open, player);
-                return;
-            }
-            older.Root.gameObject.SetActive(hasHistory);
-            newer.Root.gameObject.SetActive(hasHistory);
-            if (hasHistory)
-            {
-                ShowHint(older, player);
-                ShowHint(newer, player);
-            }
-            ShowHint(close, player);
+            ShowHint(older, player);
+            ShowHint(newer, player);
         }
 
         private static void ShowHint(ButtonHint hint, PlayerInput player)
@@ -196,11 +183,11 @@ namespace Daybook
             return label;
         }
 
-        internal bool SyncView(bool expanded, bool usingController)
+        internal bool SyncView(bool expanded, bool showHistoryHints)
         {
-            bool changed = expanded != detailed || controller != usingController;
+            bool changed = expanded != detailed || historyHintsVisible != showHistoryHints;
             if (changed)
-                SetView(expanded, usingController);
+                SetView(expanded, showHistoryHints);
             if (expanded && viewport != null)
             {
                 // Fit the expanded ledger on shorter windows in the same pixel space as the HUD.
@@ -213,19 +200,17 @@ namespace Daybook
             return changed;
         }
 
-        private void SetView(bool expanded, bool usingController)
+        private void SetView(bool expanded, bool showHistoryHints)
         {
             detailed = expanded;
-            controller = usingController;
-            open.Root.gameObject.SetActive(controller);
-            older.Root.gameObject.SetActive(controller);
-            newer.Root.gameObject.SetActive(controller);
-            close.Root.gameObject.SetActive(controller);
+            historyHintsVisible = showHistoryHints;
+            older.Root.gameObject.SetActive(showHistoryHints);
+            newer.Root.gameObject.SetActive(showHistoryHints);
             strip.gameObject.SetActive(!expanded);
             book.gameObject.SetActive(expanded);
             frame.localScale = Vector3.one;
             frame.pivot = new Vector2(1, 1);
-            frame.sizeDelta = new Vector2(expanded ? 140 : 0, (expanded ? bookHeight : 36) + (controller ? 26 : 0));
+            frame.sizeDelta = new Vector2(expanded ? 140 : 0, (expanded ? bookHeight : 36) + (showHistoryHints ? 26 : 0));
             frame.anchoredPosition = new Vector2(0, -4);
         }
 
