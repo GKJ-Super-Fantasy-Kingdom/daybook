@@ -14,6 +14,15 @@ If you enter a run mid-day, **Now** shows your inventory immediately. **Dawn** a
 
 [View all four gameplay screenshots](docs/screenshots)
 
+## Project layout
+
+| Location | Contents |
+| --- | --- |
+| [src/Daybook](src/Daybook) | Plugin lifecycle, resource tracking, and in-game HUD |
+| [thunderstore](thunderstore) | Package manifest, icon, and public listing text |
+| [docs/screenshots](docs/screenshots) | Gameplay images used by GitHub and Thunderstore |
+| [CHANGELOG.md](CHANGELOG.md) | Release notes included in the package |
+
 ## Build on Windows
 
 Install the .NET SDK, the Windows game, and BepInEx 5 in a mod manager profile. The project targets .NET Standard 2.1 and references the assemblies in your installed game and profile. Set the two paths below for your machine.
@@ -28,7 +37,7 @@ The compiled plugin is in `bin/Release/netstandard2.1/Daybook.dll`. To install i
 
 ## Package for Thunderstore
 
-After a successful Release build, run `python package.py` with Python 3. The ZIP in `dist/` contains the plugin, manifest, icon, changelog, and the player-facing README from [THUNDERSTORE.md](THUNDERSTORE.md).
+After a successful Release build, run `python package.py` with Python 3 from the repository root. The ZIP in `dist/` contains the plugin, manifest, icon, changelog, and the [Thunderstore listing](thunderstore/README.md).
 
 ## Gameplay checks
 
