@@ -2,7 +2,11 @@
 
 Daybook adds a daily resource ledger to Super Fantasy Kingdom. A strip beneath the material icons shows how much of each resource you have gained or spent since dawn. Hold **Alt** to compare dawn stock, earned, spent, current stock, and net change for materials, food, currency, and progression resources. The ledger follows the active kingdom’s icons and UI scale.
 
-![Daily material changes in the Human Kingdom](docs/screenshots/01-human-compact.png)
+![Human Kingdom compact strip showing one wood spent since dawn](docs/screenshots/0.4.0/human-compact.png)
+
+On day 13, the wood row shows 7 at dawn and 1 spent, leaving 6 on hand. The net change of **−1** matches the number beneath the wood icon.
+
+![Human Kingdom day 13 ledger showing 7 wood at dawn, 1 spent, and 6 on hand](docs/screenshots/0.4.0/human-ledger.png)
 
 ## Install
 
@@ -26,9 +30,15 @@ Daybook keeps its journal under `%USERPROFILE%\AppData\LocalLow\Super Fantasy Ga
 
 On Continue, Daybook can restore live totals when the saved checkpoint, day, and resource balances match. A new or replayed dawn starts a fresh ledger and the earlier attempt stays in history. After a forced close, the last successful write is available. A run first opened with Daybook starts recording at the first observed dawn.
 
-![Undead Kingdom ledger at UI scale 1.5](docs/screenshots/04-undead-ledger-scale-1.5.png)
+## Undead Kingdom
 
-[View all four gameplay screenshots](docs/screenshots)
+The compact strip follows the Undead material bar. Open the ledger to see supplies such as souls, potions, and paper.
+
+![Undead Kingdom compact strip beneath the six material icons on day 1](docs/screenshots/0.4.0/undead-compact.png)
+
+![Undead Kingdom day 1 ledger showing starting stocks of 2 stone and 1 faith](docs/screenshots/0.4.0/undead-ledger.png)
+
+[View the four 0.4.0 screenshots at full resolution](docs/screenshots/0.4.0)
 
 ## Project layout
 

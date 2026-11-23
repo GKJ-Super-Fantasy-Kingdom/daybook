@@ -1,12 +1,16 @@
-Daybook adds a daily balance beneath your kingdom’s resource bar. If you started the day with 3 boards and have 1 left, a red **−2** appears directly under the boards icon. You can see what you’ve gained or spent while keeping the map in view.
+Daybook adds a daily balance beneath your kingdom’s resource bar. In the Human Kingdom screenshot below, the red **−1** under wood means the kingdom has one less wood than it had at dawn. You can see what you’ve gained or spent while keeping the map in view.
 
-![Human Kingdom resource strip showing a gain of three boards](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/daybook/main/docs/screenshots/01-human-compact.png)
+![Human Kingdom compact strip showing one wood spent since dawn](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/daybook/v0.4.0/docs/screenshots/0.4.0/human-compact.png)
 
-## Hold Alt to open the ledger
+## Read the daily ledger
 
 The compact strip follows the same order as the material icons above it. Green numbers show a gain, red numbers show a loss, and zero means your stock is back at its dawn balance.
 
 Hold **Alt** to see the full ledger. **Dawn** is the amount you had that morning, **Earned** and **Spent** count increases and decreases Daybook observes in available stock, **Now** is what you have on hand, and **Net** is the difference from dawn. Earning 8 boards and spending all 8 shows 8 earned, 8 spent, and 0 net. Release Alt to return to the compact strip.
+
+On day 13, the wood row shows 7 at dawn, 0 earned, 1 spent, and 6 on hand. The net change of **−1** matches the compact strip.
+
+![Human Kingdom day 13 ledger showing 7 wood at dawn, 1 spent, and 6 on hand](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/daybook/v0.4.0/docs/screenshots/0.4.0/human-ledger.png)
 
 | Resource group | What you can check |
 | --- | --- |
@@ -15,7 +19,13 @@ Hold **Alt** to see the full ledger. **Dawn** is the amount you had that morning
 | Currency | Coins and faith. |
 | Progression | Shards, stars, and super metal. |
 
-![Earlier Undead Kingdom ledger at 1.5× UI scale](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/daybook/main/docs/screenshots/04-undead-ledger-scale-1.5.png)
+## Undead Kingdom
+
+The compact strip follows the Undead material bar. Open the ledger to see supplies such as souls, potions, and paper.
+
+![Undead Kingdom compact strip beneath the six material icons on day 1](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/daybook/v0.4.0/docs/screenshots/0.4.0/undead-compact.png)
+
+![Undead Kingdom day 1 ledger showing starting stocks of 2 stone and 1 faith](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/daybook/v0.4.0/docs/screenshots/0.4.0/undead-ledger.png)
 
 ## Controller controls
 
@@ -38,5 +48,3 @@ Daybook saves locally as you play, including when the overlay is hidden. Continu
 Choose **Install with App** on this page, select your Super Fantasy Kingdom profile, and launch with **Start modded**. The strip appears beneath the material icons when you enter a kingdom.
 
 To hide Daybook, set `ShowOverlay = false` in your profile’s `BepInEx/config/sfk.daybook.cfg`.
-
-The 0.3.0 layout was tested on Windows with **Super Fantasy Kingdom 0.8.067** and **BepInEx 5.4.23.5** in both Human and Undead kingdoms. The expanded Undead ledger was checked at **1920 × 1080** with UI scales **1** and **1.5**.
