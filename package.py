@@ -15,6 +15,7 @@ if version != project.findtext(".//Version"):
 
 framework = project.findtext(".//TargetFramework")
 files = {
+    "LICENSE": root / "LICENSE",
     "plugins/Daybook.dll": root / "bin" / "Release" / framework / "Daybook.dll",
     "manifest.json": listing / "manifest.json",
     "README.md": listing / "README.md",
