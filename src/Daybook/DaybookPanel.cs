@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using SuperFantasyKingdom;
 using SuperFantasyKingdom.UI;
 using UnityEngine;
 using UnityEngine.UI;
@@ -16,17 +17,46 @@ namespace Daybook
         private sealed class Row
         {
             internal LedgerEntry Entry;
-            internal Text Compact, Dawn, Earned, Spent, Now, Net;
+            internal Text Title, Compact, Dawn, Earned, Spent, Now, Net;
             internal int? LastDawn, LastNow;
             internal long LastEarned, LastSpent;
-            internal bool Painted;
+            internal bool Painted, ShowGross, Partial;
         }
 
         private readonly List<Row> rows = new List<Row>();
         private RectTransform frame, strip, book, viewport;
-        private Text fontSource, historyCaption;
+        private Text fontSource, historyCaption, coverageNote;
         private float bookHeight;
-        private bool detailed, historyHintsVisible;
+        private int revision = -1;
+        private DayRecord selected;
+        private bool detailed, historyHintsVisible, noteVisible;
+        private readonly LedgerTooltipLayout tooltipLayout = new LedgerTooltipLayout();
+
+        private void OnEnable() => Canvas.willRenderCanvases += PlaceTooltip;
+
+        private void OnDisable()
+        {
+            Canvas.willRenderCanvases -= PlaceTooltip;
+            tooltipLayout.Restore();
+        }
+
+        private CanvasGroup visibility;
+        private void PlaceTooltip()
+        {
+            if (frame == null || viewport == null || visibility == null) return;
+            var overlays = OverlayManager.Instance;
+            var obstructed = false;
+            if (overlays != null && overlays.IsOpen())
+            {
+                var selection = overlays.GetOverlaySelection()?.parent as RectTransform;
+                var tabs = overlays.GetOverlayTabsSelection() as RectTransform;
+                obstructed = tooltipLayout.OverlapsVisible(frame, selection, viewport) ||
+                    tooltipLayout.OverlapsVisible(frame, tabs, viewport);
+            }
+            float alpha = obstructed ? 0 : 1;
+            if (visibility.alpha != alpha) visibility.alpha = alpha;
+            tooltipLayout.Place(detailed && !obstructed ? frame : null, viewport);
+        }
         private ButtonHint older, newer;
 
         private sealed class ButtonHint
@@ -41,6 +71,7 @@ namespace Daybook
         {
             var resources = header.transform.Find("PanelResources");
             var amount = resources?.Find("Wood/Amount")?.GetComponent<Text>();
+            if (amount == null && resources != null) amount = resources.GetComponentInChildren<Text>(true);
             var border = resources?.GetComponent<Image>();
             if (amount == null || border == null)
                 return null;
@@ -48,6 +79,9 @@ namespace Daybook
             var root = new GameObject("Daybook", typeof(RectTransform), typeof(LayoutElement));
             root.GetComponent<LayoutElement>().ignoreLayout = true;
             var panel = root.AddComponent<DaybookPanel>();
+            panel.visibility = root.AddComponent<CanvasGroup>();
+            panel.visibility.blocksRaycasts = false;
+            panel.visibility.interactable = false;
             panel.fontSource = amount;
             panel.frame = (RectTransform)root.transform;
             panel.frame.SetParent(resources, false);
@@ -67,7 +101,7 @@ namespace Daybook
             surface.color = border.color;
             panel.strip = panel.Inset("Daily changes");
             panel.book = panel.Inset("Daily ledger");
-            panel.BuildRows(ledger);
+            panel.SelectRows(ledger, null);
             panel.SetView(false, false);
             return panel;
         }
@@ -84,7 +118,25 @@ namespace Daybook
             return rect;
         }
 
-        private void BuildRows(ResourceLedger ledger)
+        internal bool SelectRows(ResourceLedger ledger, DayRecord history)
+        {
+            if (selected == history && revision == ledger.Revision) return false;
+            selected = history;
+            revision = ledger.Revision;
+            foreach (var container in new[] { strip, book })
+                foreach (Transform child in container)
+                {
+                    child.gameObject.SetActive(false);
+                    Destroy(child.gameObject);
+                }
+            rows.Clear();
+            BuildRows(history == null ? ledger.Entries : ledger.HistoryRows(history),
+                history == null ? ledger.HeaderCount : 0);
+            SetView(detailed, historyHintsVisible);
+            return true;
+        }
+
+        private void BuildRows(List<LedgerEntry> entries, int headerCount)
         {
             ColumnTitle("Dawn", 0.33f, 0.46f);
             ColumnTitle("Earned", 0.46f, 0.62f);
@@ -93,37 +145,42 @@ namespace Daybook
             ColumnTitle("Net", 0.88f, 1);
             float y = 0;
             string group = null;
-            for (int i = 0; i < ledger.Entries.Count; i++)
+            for (int i = 0; i < entries.Count; i++)
             {
-                var entry = ledger.Entries[i];
+                var entry = entries[i];
                 if (entry.Group != group)
                 {
                     group = entry.Group;
-                    var heading = Label(book, group, 24, TextAnchor.MiddleLeft);
+                    // Group names are also stored in existing journals. Format only Daybook's own headings.
+                    var titleText = group switch
+                    {
+                        "Food and supplies" => "Food and Supplies",
+                        "Other stock" => "Other Stock",
+                        "Archived stock" => "Archived Stock",
+                        _ => group
+                    };
+                    var heading = Label(book, titleText, 24, TextAnchor.MiddleLeft);
                     Place(heading.rectTransform, 0, 0.33f, y, 26, 5, 2);
                     heading.color = Gold;
                     y += 26;
                 }
 
                 var row = new Row { Entry = entry };
-                if (i < ledger.HeaderCount)
+                if (i < headerCount)
                 {
-                    float left = (float)i / ledger.HeaderCount;
-                    float right = (float)(i + 1) / ledger.HeaderCount;
+                    float left = (float)i / headerCount;
+                    float right = (float)(i + 1) / headerCount;
                     row.Compact = Label(strip, "Net " + entry.Type, 26, TextAnchor.MiddleCenter);
                     Place(row.Compact.rectTransform, left, right, 0, 26);
                 }
 
                 var icon = GraphicChild<Image>(book, entry.Type + " icon");
-                icon.sprite = entry.Data != null ? entry.Data.icon : null;
+                icon.sprite = entry.Icon;
                 icon.enabled = icon.sprite != null;
                 icon.preserveAspect = true;
                 Place(icon.rectTransform, 0, 0, y, 24, 3, -27);
-                var name = entry.Data != null ? entry.Data.GetName() : null;
-                if (string.IsNullOrEmpty(name))
-                    name = entry.Type == SuperFantasyKingdom.ResourceType.SuperMetal ? "Super Metal" : entry.Type.ToString();
-                var title = Label(book, name, 23, TextAnchor.MiddleLeft);
-                Place(title.rectTransform, 0, 0.33f, y, 24, 30, 2);
+                row.Title = Label(book, entry.Label, 23, TextAnchor.MiddleLeft);
+                Place(row.Title.rectTransform, 0, 0.33f, y, 24, icon.enabled ? 30 : 5, 2);
                 row.Dawn = Number("Dawn", 0.33f, 0.46f, y);
                 row.Earned = Number("Earned", 0.46f, 0.62f, y);
                 row.Spent = Number("Spent", 0.62f, 0.76f, y);
@@ -135,6 +192,8 @@ namespace Daybook
             historyCaption = Label(book, "", 21, TextAnchor.MiddleCenter);
             historyCaption.color = Gold;
             Place(historyCaption.rectTransform, 0, 1, y, 26);
+            coverageNote = Label(book, "* Counts start at first observation and exclude gaps.", 20, TextAnchor.MiddleCenter);
+            coverageNote.color = Gold;
             bookHeight = y + 36;
             older = MakeHint(book, ControllerLedger.Older, "Older", 0.18f, 0.50f, y + 26);
             newer = MakeHint(book, ControllerLedger.Newer, "Newer", 0.55f, 0.90f, y + 26);
@@ -153,15 +212,19 @@ namespace Daybook
             return new ButtonHint { Root = root, Icon = icon, Label = label, Action = action, Verb = verb };
         }
 
-        internal void UpdateControllerHints(PlayerInput player)
+        internal void UpdateControllerHints(PlayerInput player, bool canGoOlder, bool canGoNewer)
         {
-            ShowHint(older, player);
-            ShowHint(newer, player);
+            ShowHint(older, player, canGoOlder);
+            ShowHint(newer, player, canGoNewer);
         }
 
-        private static void ShowHint(ButtonHint hint, PlayerInput player)
+        private static void ShowHint(ButtonHint hint, PlayerInput player, bool available)
         {
-            var sprite = ControllerLedger.Glyph(player, hint.Action, out string binding);
+            string binding = "";
+            var sprite = available ? ControllerLedger.Glyph(player, hint.Action, out binding) : null;
+            bool visible = sprite != null || !string.IsNullOrEmpty(binding);
+            hint.Root.gameObject.SetActive(visible);
+            if (!visible) return;
             hint.Icon.sprite = sprite;
             hint.Icon.enabled = sprite != null;
             hint.Label.text = sprite == null && !string.IsNullOrEmpty(binding)
@@ -183,9 +246,11 @@ namespace Daybook
             return label;
         }
 
-        internal bool SyncView(bool expanded, bool showHistoryHints)
+        internal bool SyncView(bool expanded, bool showHistoryHints, bool recording)
         {
-            bool changed = expanded != detailed || historyHintsVisible != showHistoryHints;
+            bool showNote = expanded && recording && rows.Exists(row => row.Entry.Balance.IsPartial);
+            bool changed = expanded != detailed || historyHintsVisible != showHistoryHints || showNote != noteVisible;
+            noteVisible = showNote;
             if (changed)
                 SetView(expanded, showHistoryHints);
             if (expanded && viewport != null)
@@ -208,30 +273,37 @@ namespace Daybook
             newer.Root.gameObject.SetActive(showHistoryHints);
             strip.gameObject.SetActive(!expanded);
             book.gameObject.SetActive(expanded);
+            coverageNote.gameObject.SetActive(noteVisible);
+            float controlsHeight = showHistoryHints ? 26 : 0;
+            Place(coverageNote.rectTransform, 0, 1, bookHeight - 10 + controlsHeight, 24, 5, 5);
             frame.localScale = Vector3.one;
             frame.pivot = new Vector2(1, 1);
-            frame.sizeDelta = new Vector2(expanded ? 140 : 0, (expanded ? bookHeight : 36) + (showHistoryHints ? 26 : 0));
+            frame.sizeDelta = new Vector2(expanded ? 140 : 0, expanded ? bookHeight + controlsHeight + (noteVisible ? 24 : 0) : 36);
             frame.anchoredPosition = new Vector2(0, -4);
         }
 
-        internal void Refresh(DayRecord history, string caption)
+        internal void Refresh(string caption, bool recording)
         {
             historyCaption.text = caption;
             foreach (var row in rows)
             {
                 var entry = row.Entry.Balance;
-                if (history != null && !history.Rows.TryGetValue((int)row.Entry.Type, out entry))
-                    entry = new Balance();
-                if (row.Painted && row.LastDawn == entry.Dawn && row.LastNow == entry.Now &&
+                bool showGross = recording && entry.HasSample;
+                bool partial = showGross && entry.IsPartial;
+                if (row.Painted && row.ShowGross == showGross && row.Partial == partial && row.LastDawn == entry.Dawn && row.LastNow == entry.Now &&
                     row.LastEarned == entry.Earned && row.LastSpent == entry.Spent)
                     continue;
+                if (!row.Painted || row.Partial != partial)
+                    row.Title.text = partial ? row.Entry.Label + "*" : row.Entry.Label;
                 row.Painted = true;
+                row.ShowGross = showGross;
+                row.Partial = partial;
                 row.LastDawn = entry.Dawn;
                 row.LastNow = entry.Now;
                 row.LastEarned = entry.Earned;
                 row.LastSpent = entry.Spent;
-                row.Earned.text = entry.Dawn.HasValue ? entry.Earned.ToString() : "\u2013";
-                row.Spent.text = entry.Dawn.HasValue ? entry.Spent.ToString() : "\u2013";
+                row.Earned.text = showGross ? entry.Earned.ToString() : "\u2013";
+                row.Spent.text = showGross ? entry.Spent.ToString() : "\u2013";
                 long? net = (long?)entry.Now - entry.Dawn;
                 string delta = net?.ToString("+0;-0;0") ?? "–";
                 Color32 color = net > 0 ? Gain : net < 0 ? Loss : (Color32)Color.white;

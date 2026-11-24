@@ -1,50 +1,38 @@
-Daybook adds a daily balance beneath your kingdom’s resource bar. In the Human Kingdom screenshot below, the red **−1** under wood means the kingdom has one less wood than it had at dawn. You can see what you’ve gained or spent while keeping the map in view.
+Daybook tracks what your kingdom earns and spends each day in **Super Fantasy Kingdom**. A compact strip beneath the material icons shows how much each stock has risen or fallen since dawn. Open the detailed ledger to see what came in, what went out, and what you have left.
 
-![Human Kingdom compact strip showing one wood spent since dawn](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/daybook/v0.4.0/docs/screenshots/0.4.0/human-compact.png)
+## What Daybook tracks
 
-## Read the daily ledger
+- **Materials** follow your kingdom. Humans track wheat, wood, boards, stone, gold, and ingots. Undead track bone, stone, block, ooze, blood, and book.
+- **Food and supplies** are tracked individually, from berries, bread, and beer to kingdom-specific supplies such as souls and potions.
+- **Currency and progression** include coins, faith, shards, stars, and super metal.
 
-The compact strip follows the same order as the material icons above it. Green numbers show a gain, red numbers show a loss, and zero means your stock is back at its dawn balance.
+For each resource, the ledger lists **Dawn**, **Earned**, **Spent**, **Now**, and **Net**. A reported gain of 8 boards followed by a reported spend of 8 shows **8 earned**, **8 spent**, and **0 net**. Daybook also observes direct changes through the game's coin, shard, star, super metal, and faith setters. If a mod writes stock silently through another path, offsetting changes between samples can go unseen.
 
-Hold **Alt** to see the full ledger. **Dawn** is the amount you had that morning, **Earned** and **Spent** count increases and decreases Daybook observes in available stock, **Now** is what you have on hand, and **Net** is the difference from dawn. Earning 8 boards and spending all 8 shows 8 earned, 8 spent, and 0 net. Release Alt to return to the compact strip.
+An asterisk marks a resource first seen after dawn or tracked through a gap. **Earned** and **Spent** show the changes Daybook observed. **Dawn** and **Net** appear when dawn stock is known. Net includes any stock change across a gap.
 
-On day 13, the wood row shows 7 at dawn, 0 earned, 1 spent, and 6 on hand. The net change of **−1** matches the compact strip.
+## Daily history
 
-![Human Kingdom day 13 ledger showing 7 wood at dawn, 1 spent, and 6 on hand](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/daybook/v0.4.0/docs/screenshots/0.4.0/human-ledger.png)
+Daybook saves your ledger locally as you play. Browse earlier days from the same run while your current day keeps updating. Saved pages keep their resource rows even when a resource becomes unavailable. When you continue from a matching game checkpoint, Daybook restores the corresponding balances. If the game takes you back to an earlier dawn, your previous attempt stays in history and the replay gets its own record.
 
-| Resource group | What you can check |
-| --- | --- |
-| Materials | Wheat, wood, boards, stone, gold, and ingots in the Human Kingdom. Bone, stone, block, ooze, blood, and book in the Undead Kingdom. |
-| Food and supplies | Individual stocks such as berries, bread, fish, beer, flour, and water, or kingdom-specific supplies such as candy, potions, souls, and paper. |
-| Currency | Coins and faith. |
-| Progression | Shards, stars, and super metal. |
+## Controls
 
-## Undead Kingdom
+| Action | Keyboard | Xbox | PlayStation |
+| --- | --- | --- | --- |
+| Open the ledger | Hold Alt | Hold RT | Hold R2 |
+| View an older record | Alt + Page Up | RT + LB | R2 + L1 |
+| View a newer record | Alt + Page Down | RT + RB | R2 + R1 |
+| Return to the live HUD | Release Alt | Release RT | Release R2 |
 
-The compact strip follows the Undead material bar. Open the ledger to see supplies such as souls, potions, and paper.
+These are the default bindings. Daybook follows the game's UI scale and uses the active controller's button icons for history navigation when available.
 
-![Undead Kingdom compact strip beneath the six material icons on day 1](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/daybook/v0.4.0/docs/screenshots/0.4.0/undead-compact.png)
+## Installation
 
-![Undead Kingdom day 1 ledger showing starting stocks of 2 stone and 1 faith](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/daybook/v0.4.0/docs/screenshots/0.4.0/undead-ledger.png)
+Choose **Install with App**, select your Super Fantasy Kingdom profile, and launch with **Start modded**. To hide the HUD while continuing to record, set `ShowOverlay = false` in `BepInEx/config/sfk.daybook.cfg` in that profile.
 
-## Controller controls
+## Screenshots
 
-| Action | Xbox | PlayStation |
-| --- | --- | --- |
-| Open the detailed ledger | Hold RT | Hold R2 |
-| Browse older / newer records | While holding RT, press LB / RB | While holding R2, press L1 / R1 |
-| Return to the live resource strip | Release RT | Release R2 |
+![Compact material strip at 1× UI scale](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/daybook/v0.4.1/docs/screenshots/0.4.1/compact-1x.png)
 
-These are the default controls. Daybook follows your in-game detail, pause, and speed bindings and uses the game's button icons when available. The shoulder buttons page only while browsing a ledger with saved records. Keyboard players can hold **Alt** and use **Page Up** or **Page Down**.
+![Saved daily ledger with keyboard paging at 1× UI scale](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/daybook/v0.4.1/docs/screenshots/0.4.1/journal-keyboard-1x.png)
 
-## Continue a saved kingdom
-
-Hold **Alt** and press **Page Up** to browse earlier records from the same run. **Page Down** moves toward today. Release Alt to return to the live resource strip.
-
-Daybook saves locally as you play, including when the overlay is hidden. Continuing from a matching checkpoint restores that day's balances. If the game restarts at an earlier dawn, you can read your previous attempt in history while the live ledger tracks the replay. Earlier versions have no saved history to import.
-
-## Install and play
-
-Choose **Install with App** on this page, select your Super Fantasy Kingdom profile, and launch with **Start modded**. The strip appears beneath the material icons when you enter a kingdom.
-
-To hide Daybook, set `ShowOverlay = false` in your profile’s `BepInEx/config/sfk.daybook.cfg`.
+![Saved daily ledger with PlayStation paging at 1.5× UI scale](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/daybook/v0.4.1/docs/screenshots/0.4.1/journal-controller-1p5x.png)

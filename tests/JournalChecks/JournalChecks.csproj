@@ -4,6 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="../../src/Daybook/ResourceLedger.cs" Link="ResourceLedger.cs" />
     <Compile Include="../../src/Daybook/Journal.cs" Link="Journal.cs" />
   </ItemGroup>
 </Project>

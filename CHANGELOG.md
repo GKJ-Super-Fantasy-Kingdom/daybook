@@ -1,3 +1,10 @@
+## 0.4.1
+
+- Count direct changes to coins, faith, shards, stars, and super metal, including rewards and spending that cancel out before the next stock sample.
+- Track newly discovered resources and retain saved rows when a resource or its icon becomes unavailable. An asterisk marks rows with partial observations.
+- Skip unreadable journal pages when browsing history. Show the paging directions available from the selected day and follow controller rebindings and device changes.
+- Keep the game's tooltips readable beside the expanded ledger.
+
 ## 0.4.0
 
 - Added controller history navigation with Older and Newer button prompts when saved records are available.

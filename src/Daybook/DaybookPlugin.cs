@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Daybook
 {
-    [BepInPlugin("sfk.daybook", "Daybook", "0.4.0")]
+    [BepInPlugin("sfk.daybook", "Daybook", "0.4.1")]
     public sealed class DaybookPlugin : BaseUnityPlugin
     {
         private ConfigEntry<bool> showOverlay;
@@ -27,7 +27,7 @@ namespace Daybook
         private int day;
         private Guid run;
         private bool tracking, dirty;
-        private float nextWrite, nextPoll;
+        private float nextWrite, nextPoll, nextCatalog;
         private string lastError;
         private Harmony patches;
         internal string LoadedHash;
@@ -43,6 +43,8 @@ namespace Daybook
             patches.PatchAll(typeof(ControllerLedger.OlderAction));
             patches.PatchAll(typeof(ControllerLedger.NewerAction));
             patches.PatchAll(typeof(ControllerLedger.HudAction));
+            DirectStockChanges.Install(patches);
+            DirectStockChanges.Changed += ResourceChanged;
             GameManager.OnGameInit += CloseDay;
             GameManager.BeforeSave += CaptureAndFlush;
             ResourceManager.OnResourceAmountChanged += ResourceChanged;
@@ -56,6 +58,7 @@ namespace Daybook
             CloseDay();
             ControllerLedger.Plugin = null;
             GameCheckpoints.Plugin = null;
+            DirectStockChanges.Changed -= ResourceChanged;
             patches?.UnpatchSelf();
             GameManager.OnGameInit -= CloseDay;
             GameManager.BeforeSave -= CaptureAndFlush;
@@ -69,7 +72,6 @@ namespace Daybook
         private void SetDetailedView(bool enabled)
         {
             detailedCity = enabled ? CityManager.Instance : null;
-            if (!enabled) SelectHistory(-1);
         }
 
         private void OnApplicationQuit()
@@ -82,7 +84,10 @@ namespace Daybook
         {
             if (tracking && ledger.Kingdom != null && ledger.Kingdom == ResourceManager.Instance &&
                 GameManager.Instance != null && !GameManager.Instance.IsUnloading())
+            {
+                dirty |= ledger.RefreshCatalog();
                 dirty |= ledger.Read();
+            }
             Flush();
         }
 
@@ -104,6 +109,7 @@ namespace Daybook
             CloseDay();
             if (!BindLedger()) return;
             day = newDay;
+            ledger.RefreshCatalog();
             ledger.Read();
             DayRecord restored = null;
             if (Guid.TryParse(GameDataManager.Instance.GetRunID(), out run))
@@ -146,6 +152,7 @@ namespace Daybook
         {
             if (!tracking || journal == null || ledger.Kingdom != ResourceManager.Instance ||
                 !Guid.TryParse(savedRun, out var id) || id != run || string.IsNullOrEmpty(hash)) return;
+            dirty |= ledger.RefreshCatalog();
             dirty |= ledger.Read();
             journal.SaveCheckpoint(Journal.Fingerprint(hash), ledger.Snapshot(day));
             Flush();
@@ -155,19 +162,20 @@ namespace Daybook
         {
             if (tracking && ledger.Kingdom != null && ledger.Kingdom == ResourceManager.Instance &&
                 GameManager.Instance != null && !GameManager.Instance.IsUnloading())
-                dirty |= ledger.Read(type);
+                dirty |= ledger.Changed(type);
         }
+
+        private bool CanBrowseHistory() => previous.Length > 0 && panel != null &&
+            panel.isActiveAndEnabled && UIManager.Instance != null && UIManager.Instance.IsWorldInteractable();
 
         internal bool CanPageWithController()
         {
             var player = ControllerLedger.ActivePlayer();
             var menu = PauseMenuManger.Instance;
-            return player != null && previous.Length > 0 && showOverlay.Value &&
-                panel != null && panel.gameObject.activeInHierarchy &&
+            return player != null && showOverlay.Value && CanBrowseHistory() &&
                 detailedCity != null && detailedCity == CityManager.Instance &&
                 player.actions.FindAction(ControllerLedger.Details)?.IsPressed() == true &&
-                (menu == null || (!menu.InMenu() && !menu.IsOpen())) &&
-                UIManager.Instance != null && UIManager.Instance.IsWorldInteractable();
+                (menu == null || (!menu.InMenu() && !menu.IsOpen()));
         }
 
         internal void PageHistory(int step)
@@ -179,16 +187,10 @@ namespace Daybook
         private bool SelectHistory(int target)
         {
             if (target == historyIndex) return false;
+            if (target >= 0)
+                return journal.Browse(ref previous, ref historyIndex, ref history, target, ReportJournalError);
             history = null;
-            int step = target > historyIndex ? 1 : -1;
-            while (target >= 0 && target < previous.Length)
-            {
-                try { history = journal.Read(previous[target]); }
-                catch (Exception e) { ReportJournalError(e); }
-                if (history != null) break;
-                target += step;
-            }
-            historyIndex = history == null ? -1 : target;
+            historyIndex = -1;
             return true;
         }
 
@@ -220,7 +222,13 @@ namespace Daybook
             if (bound && Time.unscaledTime >= nextPoll)
             {
                 nextPoll = Time.unscaledTime + 0.5f;
-                if (ledger.Read() && tracking) dirty = true;
+                bool catalogChanged = false;
+                if (Time.unscaledTime >= nextCatalog)
+                {
+                    nextCatalog = Time.unscaledTime + 2;
+                    catalogChanged = ledger.RefreshCatalog();
+                }
+                if ((ledger.Read() || catalogChanged) && tracking) dirty = true;
             }
             if (dirty && Time.unscaledTime >= nextWrite)
             {
@@ -255,21 +263,34 @@ namespace Daybook
             var player = ControllerLedger.ActivePlayer();
             if (player != null)
                 expanded &= player.actions.FindAction(ControllerLedger.Details)?.IsPressed() == true;
-            bool showHistoryHints = expanded && player != null && previous.Length > 0;
-            bool changedView = panel.SyncView(expanded, showHistoryHints);
+            bool canBrowse = expanded && CanBrowseHistory();
+            bool showHistoryHints = canBrowse && player != null;
+            bool changedView = false;
             var keys = Keyboard.current;
             if (!expanded) changedView |= SelectHistory(-1);
-            else if (keys != null && keys.pageUpKey.wasPressedThisFrame) PageHistory(1);
-            else if (keys != null && keys.pageDownKey.wasPressedThisFrame) PageHistory(-1);
+            else if (canBrowse && player == null && keys != null)
+            {
+                if (keys.pageUpKey.wasPressedThisFrame) PageHistory(1);
+                else if (keys.pageDownKey.wasPressedThisFrame) PageHistory(-1);
+            }
+            changedView |= panel.SelectRows(ledger, history);
+            bool recording = tracking || history != null;
+            changedView |= panel.SyncView(expanded, showHistoryHints, recording);
             if (!opening && !changedView && Time.unscaledTime < nextRefresh)
                 return;
 
             nextRefresh = Time.unscaledTime + 0.5f;
             string caption = history == null ? (tracking ? $"Day {day}" : "Waiting for dawn")
-                : $"Saved day {history.Day} ({historyIndex + 1}/{previous.Length})";
-            if (expanded && player == null && previous.Length > 0) caption += "   PgUp older / PgDn newer";
-            panel.Refresh(history, caption);
-            if (showHistoryHints) panel.UpdateControllerHints(player);
+                : $"Saved Day {history.Day} ({historyIndex + 1}/{previous.Length})";
+            bool older = historyIndex + 1 < previous.Length;
+            bool newer = historyIndex >= 0;
+            if (canBrowse && player == null && keys != null)
+            {
+                if (older) caption += "   PgUp Older";
+                if (newer) caption += older ? " / PgDn Newer" : "   PgDn Newer";
+            }
+            panel.Refresh(caption, recording);
+            if (showHistoryHints) panel.UpdateControllerHints(player, older, newer);
         }
     }
 }

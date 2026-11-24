@@ -1,12 +1,8 @@
 # Daybook
 
-Daybook adds a daily resource ledger to Super Fantasy Kingdom. A strip beneath the material icons shows how much of each resource you have gained or spent since dawn. Hold **Alt** to compare dawn stock, earned, spent, current stock, and net change for materials, food, currency, and progression resources. The ledger follows the active kingdom’s icons and UI scale.
+Daybook tracks daily resource gains and spending in Super Fantasy Kingdom. The strip under the six material icons shows each material’s net change since dawn. Hold **Alt** or the controller’s detail trigger to see opening stock, gains, spending, current stock, and net change. Saved days let you compare how your kingdom used its supplies over a run.
 
-![Human Kingdom compact strip showing one wood spent since dawn](docs/screenshots/0.4.0/human-compact.png)
-
-On day 13, the wood row shows 7 at dawn and 1 spent, leaving 6 on hand. The net change of **−1** matches the number beneath the wood icon.
-
-![Human Kingdom day 13 ledger showing 7 wood at dawn, 1 spent, and 6 on hand](docs/screenshots/0.4.0/human-ledger.png)
+![Daybook’s compact material strip at 1× UI scale](docs/screenshots/0.4.1/compact-1x.png)
 
 ## Install
 
@@ -24,21 +20,23 @@ These are the default controls. Daybook follows your in-game detail, pause, and 
 
 ## Continuing a run
 
-Hold **Alt** and press **Page Up** to read earlier records from this run. **Page Down** moves toward the live day. Release Alt to return to the live strip. **Earned** and **Spent** count observed increases and decreases in available stock. Earning and spending 8 boards shows 8 in both columns and 0 net.
+Hold **Alt** and press **Page Up** to read earlier records from this run. **Page Down** moves toward the live day. Release Alt to return to the live strip. **Earned** and **Spent** count observed increases and decreases in available stock. A reported gain and spend of 8 boards shows 8 in both columns and 0 net. Daybook observes the game's resource notifications and direct setters for coins, shards, stars, super metal, and faith. Mods that silently change stock between samples can hide offsetting transactions.
+
+An asterisk marks partial coverage. Earned and Spent cover observed periods, including resources discovered after dawn. Net compares current stock with known dawn stock and includes changes during an absence. A missing or unreadable journal page is skipped when browsing.
 
 Daybook keeps its journal under `%USERPROFILE%\AppData\LocalLow\Super Fantasy Games\Super Fantasy Kingdom\Daybook`, grouped by game profile, kingdom, and run ID. It writes changed records every two seconds and flushes pending changes on a normal exit. Copy this folder along with your game saves when moving PCs.
 
 On Continue, Daybook can restore live totals when the saved checkpoint, day, and resource balances match. A new or replayed dawn starts a fresh ledger and the earlier attempt stays in history. After a forced close, the last successful write is available. A run first opened with Daybook starts recording at the first observed dawn.
 
-## Undead Kingdom
+## Resource coverage
 
-The compact strip follows the Undead material bar. Open the ledger to see supplies such as souls, potions, and paper.
+The ledger follows your kingdom’s materials and food supplies. For example, the Human kingdom tracks wood and boards, while the Undead kingdom tracks bones, ooze, and blood. Both also track currency and progression. Saved pages retain entries for resources that later become unavailable.
 
-![Undead Kingdom compact strip beneath the six material icons on day 1](docs/screenshots/0.4.0/undead-compact.png)
+![Saved daily ledger with keyboard paging at 1× UI scale](docs/screenshots/0.4.1/journal-keyboard-1x.png)
 
-![Undead Kingdom day 1 ledger showing starting stocks of 2 stone and 1 faith](docs/screenshots/0.4.0/undead-ledger.png)
+![Saved daily ledger with PlayStation paging prompts at 1.5× UI scale](docs/screenshots/0.4.1/journal-controller-1p5x.png)
 
-[View the four 0.4.0 screenshots at full resolution](docs/screenshots/0.4.0)
+[Human and Undead gameplay gallery from 0.4.0](docs/screenshots/0.4.0)
 
 ## Project layout
 
@@ -66,6 +64,8 @@ The compiled plugin is in `bin/Release/netstandard2.1/Daybook.dll`. To install i
 After a successful Release build, run `python package.py` with Python 3 from the repository root. The ZIP in `dist/` contains the plugin, manifest, icon, changelog, and the [Thunderstore listing](thunderstore/README.md).
 
 ## Gameplay checks
+
+On Windows, run `python tests/NativeStockChecks/run.py` after packaging to exercise the ZIP's stock hooks in the game's embedded Mono runtime. Pass `--cheat-menu <DLL path>` to check compatibility with the 3× coin reward in ILM/CheatMenu 1.0.3. Both checks run offline.
 
 In a kingdom, compare the compact strip with the Alt ledger after gaining or spending a resource. Check that the comparison resets at dawn, the panel follows the game’s UI scale, and the ledger reflects the active kingdom after switching between Human and Undead.
 

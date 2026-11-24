@@ -17,16 +17,23 @@ namespace Daybook
         {
             var manager = GamepadManager.Instance;
             if (manager == null || !manager.IsGamepadInUse()) return null;
-            var player = manager.GetPlayerInput();
-            return player != null && player.actions.FindAction(Details)?.enabled == true ? player : null;
+            return manager.GetPlayerInput();
         }
 
         internal static Sprite Glyph(PlayerInput player, string actionPath, out string bindingName)
         {
             var action = player.actions.FindAction(actionPath);
-            int index = action?.GetBindingIndex(group: player.currentControlScheme) ?? -1;
-            bindingName = index < 0 ? "" : action.GetBindingDisplayString(index);
+            bindingName = "";
+            if (action == null || !action.enabled) return null;
+            int index = -1;
+            foreach (var control in action.controls)
+            {
+                if (!(control.device is Gamepad)) continue;
+                index = action.GetBindingIndexForControl(control);
+                if (index >= 0) break;
+            }
             if (index < 0) return null;
+            bindingName = action.GetBindingDisplayString(index);
             var binding = action.bindings[index];
             string key = binding.effectivePath;
             if (!string.IsNullOrEmpty(binding.effectiveProcessors)) key += "Processor";

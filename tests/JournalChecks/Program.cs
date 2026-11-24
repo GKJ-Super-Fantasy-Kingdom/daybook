@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -27,6 +26,8 @@ internal static class Program
         try
         {
             var journal = new Journal(root.FullName, 1, 0, Run);
+            CatalogChecks.Run(journal);
+            CheckPaging(root.FullName);
             var boards = new Balance { Dawn = 3, Now = 3 };
             var record = new DayRecord { Day = 7, Rows = { [1] = boards } };
             journal.Save(record);
@@ -44,9 +45,40 @@ internal static class Program
             using var process = Process.Start(child);
             process.WaitForExit();
             Require(process.ExitCode == 0, "fresh process readback");
-            Console.WriteLine("Passed journal write, restart, rollback, history and isolation checks.");
+            Console.WriteLine("Passed resource catalog, accounting, journal write, restart, rollback, history and isolation checks.");
         }
         finally { root.Delete(true); }
+    }
+
+    private static void CheckPaging(string root)
+    {
+        var run = Guid.NewGuid();
+        var journal = new Journal(root, 2, 0, run);
+        var record = new DayRecord { Day = 7, Rows = { [1] = new Balance { Dawn = 1, Now = 1 } } };
+        journal.Save(record);
+        var reader = new Journal(root, 2, 0, run);
+        var saved = reader.Previous()[0];
+        var bad = Path.Combine(root, "corrupt.json");
+        File.WriteAllText(bad, "{");
+        var missing = Path.Combine(root, "missing.json");
+        var paths = new[] { missing, saved, bad };
+        int index = -1, errors = 0;
+        DayRecord page = null;
+        reader.Browse(ref paths, ref index, ref page, 0, e => errors++);
+        Require(index == 0 && paths.Length == 2 && page.Day == 7, "skip missing newer file and open valid page");
+        var current = page;
+        reader.Browse(ref paths, ref index, ref page, 1, e => errors++);
+        Require(page == current && index == 0 && paths.Length == 1 && errors == 1,
+            "invalid oldest pruned without losing current page");
+        paths = new[] { bad, saved };
+        index = 1;
+        reader.Browse(ref paths, ref index, ref page, 0, e => errors++);
+        Require(page == current && index == 0 && paths.Length == 1, "pruning newer file keeps selected page");
+        paths = new[] { bad, missing };
+        index = -1;
+        page = null;
+        reader.Browse(ref paths, ref index, ref page, 0, e => errors++);
+        Require(paths.Length == 0 && index == -1 && page == null, "all-invalid archive disables paging");
     }
 
     private static void VerifyAfterRestart(string root)
@@ -56,11 +88,14 @@ internal static class Program
         var boards = checkpoint.Rows[1];
         Require(boards.Dawn == 3 && boards.Now == 3 && boards.Earned == 8 && boards.Spent == 8,
             "offsetting transactions survive restart");
-        var live = new Dictionary<int, Balance> { [1] = new Balance { Now = 3 } };
-        Require(checkpoint.Matches(7, live), "same checkpoint, day and inventory");
-        Require(!checkpoint.Matches(8, live), "new dawn");
-        live[1].Now = 2;
-        Require(!checkpoint.Matches(7, live), "stock mismatch");
+        boards.Asset = "boards";
+        boards.Label = "Planks";
+        boards.Group = "Materials";
+        journal.Save(checkpoint);
+        var reader = new Journal(root, 1, 0, Run);
+        var written = reader.Read(reader.Previous()[0]).Rows[1];
+        Require(written.Label == "Planks" && written.Group == "Materials" && written.Asset == "boards",
+            "historical presentation survives removal");
         Require(journal.LoadCheckpoint(Journal.Fingerprint("another save")) == null, "older or unknown save");
         var paths = journal.Previous();
         Require(paths.Length == 1 && journal.Read(paths[0]).Rows[1].Spent == 9,
