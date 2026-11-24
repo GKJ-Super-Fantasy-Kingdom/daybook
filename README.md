@@ -1,42 +1,55 @@
 # Daybook
 
-Daybook tracks daily resource gains and spending in Super Fantasy Kingdom. The strip under the six material icons shows each material’s net change since dawn. Hold **Alt** or the controller’s detail trigger to see opening stock, gains, spending, current stock, and net change. Saved days let you compare how your kingdom used its supplies over a run.
+Daybook shows what your kingdom earned, what it spent, and how much is left each day. Check six materials at a glance beneath the resource bar, or open the ledger to compare today's supplies with earlier days in the same run.
 
-![Daybook’s compact material strip at 1× UI scale](docs/screenshots/0.4.1/compact-1x.png)
+## Features
 
-## Install
+- **Separate gains and spending.** If you gain 8 boards and spend 8 on buildings, the ledger shows 8 earned, 8 spent, and 0 net. You can see the activity even when your stock ends where it started.
+- **Follow your kingdom's resources.** The full ledger covers materials, food and supplies, currency, and progression. Human kingdoms can track wood and bread, while Undead kingdoms can track bones and souls.
+- **Keep a daily history.** Daybook saves records locally for each profile, kingdom, and run. Continue restores the ledger for a matching checkpoint. If you replay a dawn, the earlier attempt stays available to browse.
 
-On the [Daybook Thunderstore listing](https://thunderstore.io/c/super-fantasy-kingdom/p/GKJ/Daybook/), choose **Install with App**, select your Super Fantasy Kingdom profile, and choose **Start modded**. To hide the panel, set `ShowOverlay = false` in the profile’s `BepInEx/config/sfk.daybook.cfg`.
+## How to Use
 
-## Controller controls
+1. After the first dawn Daybook observes, look beneath each material icon for its net change since dawn.
+2. Hold **Alt** on keyboard, **RT** on Xbox, or **R2** on PlayStation to open the ledger. Read across a row to compare **Dawn**, **Earned**, **Spent**, **Now**, and **Net**. On a saved day, **Last** shows the stock at the last observation for that record. An asterisk marks a resource observed for only part of the day.
+3. Keep holding the detail key or trigger. Press **Page Up** (keyboard), **LB** (Xbox), or **L1** (PlayStation) for an older record. Press **Page Down**, **RB**, or **R1** to move toward today. The footer shows which directions are available and follows your controller bindings.
+4. Release **Alt**, **RT**, or **R2** to return directly to the live strip. Today's totals keep updating while you browse.
 
-| Action | Xbox | PlayStation |
-| --- | --- | --- |
-| Open the detailed ledger | Hold RT | Hold R2 |
-| Browse older / newer records | While holding RT, press LB / RB | While holding R2, press L1 / R1 |
-| Return to the live resource strip | Release RT | Release R2 |
+## Screenshots
 
-These are the default controls. Daybook follows your in-game detail, pause, and speed bindings and uses the game's button icons when available. The shoulder buttons page only while browsing a ledger with saved records. Keyboard players can hold **Alt** and use **Page Up** or **Page Down**.
+![Six daily material balances beneath the resource bar at 1×](docs/screenshots/0.4.2/compact-1x.png)
 
-## Continuing a run
+*Read down from each material icon to see its net change since dawn.*
 
-Hold **Alt** and press **Page Up** to read earlier records from this run. **Page Down** moves toward the live day. Release Alt to return to the live strip. **Earned** and **Spent** count observed increases and decreases in available stock. A reported gain and spend of 8 boards shows 8 in both columns and 0 net. Daybook observes the game's resource notifications and direct setters for coins, shards, stars, super metal, and faith. Mods that silently change stock between samples can hide offsetting transactions.
+![Live Day 10 ledger beside the pinned Lumberyard upgrade at 1×](docs/screenshots/0.4.2/live-1x.png)
 
-An asterisk marks partial coverage. Earned and Spent cover observed periods, including resources discovered after dawn. Net compares current stock with known dawn stock and includes changes during an absence. A missing or unreadable journal page is skipped when browsing.
+*Wood started at 1. After spending it, Now reads 0 and Net reads −1.*
 
-Daybook keeps its journal under `%USERPROFILE%\AppData\LocalLow\Super Fantasy Games\Super Fantasy Kingdom\Daybook`, grouped by game profile, kingdom, and run ID. It writes changed records every two seconds and flushes pending changes on a normal exit. Copy this folder along with your game saves when moving PCs.
+![Saved Day 10 ledger with Older and Newer bumper prompts at 1.5×](docs/screenshots/0.4.2/saved-1p5x.png)
 
-On Continue, Daybook can restore live totals when the saved checkpoint, day, and resource balances match. A new or replayed dawn starts a fresh ledger and the earlier attempt stays in history. After a forced close, the last successful write is available. A run first opened with Daybook starts recording at the first observed dawn.
+*On this saved page, wood shows 2 earned and 1 spent. Last reads 2 and Net reads +1. The footer shows both paging directions.*
 
-## Resource coverage
+Captured in Daybook 0.4.2 on Super Fantasy Kingdom 0.8.068 at 1920 × 1080 with a virtual Xbox-style controller.
 
-The ledger follows your kingdom’s materials and food supplies. For example, the Human kingdom tracks wood and boards, while the Undead kingdom tracks bones, ooze, and blood. Both also track currency and progression. Saved pages retain entries for resources that later become unavailable.
+## Compatibility
 
-![Saved daily ledger with keyboard paging at 1× UI scale](docs/screenshots/0.4.1/journal-keyboard-1x.png)
+- The ledger follows both Human and Undead resource bars at UI scales 1× and 1.5×.
+- On Windows game build 0.8.068, the strip and ledger cleared the [Pin a Build Cost](https://thunderstore.io/c/super-fantasy-kingdom/p/GKJ/PinABuildCost/) upgrade, [Kingdom Charters](https://thunderstore.io/c/super-fantasy-kingdom/p/GKJ/KingdomCharters/) debt badge, and [Visitor Calendar](https://thunderstore.io/c/super-fantasy-kingdom/p/GKJ/VisitorCalendar/) prompt at both scales with [Production Bottlenecks](https://thunderstore.io/c/super-fantasy-kingdom/p/GKJ/ProductionBottlenecks/) enabled.
+- With ILM's [CheatMenu](https://thunderstore.io/c/super-fantasy-kingdom/p/ILM/CheatMenu/) 1.0.3 set to triple coin rewards, Daybook counted a 5-coin reward as 15 earned and a subsequent 2-coin purchase as 2 spent.
+- If you use ownlyme's [Tavern Food Priorities](https://thunderstore.io/c/super-fantasy-kingdom/p/ownlyme/TavernFoodPriorities/), the food rows show kingdom stock. Meals eaten from the tavern's private stores are outside those totals.
+- If a mod silently adds and removes stock between observations, the **Earned** and **Spent** columns can miss those changes.
 
-![Saved daily ledger with PlayStation paging prompts at 1.5× UI scale](docs/screenshots/0.4.1/journal-controller-1p5x.png)
+## Installation
 
-[Human and Undead gameplay gallery from 0.4.0](docs/screenshots/0.4.0)
+1. Choose **Install with App** and select your Super Fantasy Kingdom profile in Thunderstore Mod Manager or r2modman.
+2. Install Daybook with its listed dependencies, [BepInExPack](https://thunderstore.io/c/super-fantasy-kingdom/p/BepInEx/BepInExPack/) and [HideManagerGameObject_Config](https://thunderstore.io/c/super-fantasy-kingdom/p/BepInEx/HideManagerGameObject_Config/).
+3. Choose **Start modded** and enter your kingdom. To keep recording with the HUD hidden, set `ShowOverlay = false` in your profile's `BepInEx/config/sfk.daybook.cfg`.
+
+## Back Up a Journal
+
+Daybook keeps its journal under `%USERPROFILE%\AppData\LocalLow\Super Fantasy Games\Super Fantasy Kingdom\Daybook`, grouped by game profile, kingdom and run ID. Copy this folder along with your game saves when moving PCs. Daybook writes changed records every two seconds and flushes pending changes on a normal exit.
+
+A matching checkpoint, day and resource balance can restore the live record on Continue. After a forced close, recovery uses the last successful write. Saved pages retain rows for resources that later become unavailable.
 
 ## Project layout
 

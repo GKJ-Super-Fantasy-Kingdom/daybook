@@ -1,3 +1,9 @@
+## 0.4.2
+
+- Give each resource group one shaded heading, align names when an icon is missing, and distinguish earned, spent, and unchanged amounts.
+- Label live days explicitly and show the last observed stock on saved pages under Last.
+- Keep journal paging controls above the active Kingdom Charters debt badge at large UI scale.
+
 ## 0.4.1
 
 - Count direct changes to coins, faith, shards, stars, and super metal, including rewards and spending that cancel out before the next stock sample.

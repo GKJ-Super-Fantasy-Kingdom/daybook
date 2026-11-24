@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Daybook
 {
-    [BepInPlugin("sfk.daybook", "Daybook", "0.4.1")]
+    [BepInPlugin("sfk.daybook", "Daybook", "0.4.2")]
     public sealed class DaybookPlugin : BaseUnityPlugin
     {
         private ConfigEntry<bool> showOverlay;
@@ -280,7 +280,7 @@ namespace Daybook
                 return;
 
             nextRefresh = Time.unscaledTime + 0.5f;
-            string caption = history == null ? (tracking ? $"Day {day}" : "Waiting for dawn")
+            string caption = history == null ? (tracking ? $"Live Day {day}" : "Waiting for dawn")
                 : $"Saved Day {history.Day} ({historyIndex + 1}/{previous.Length})";
             bool older = historyIndex + 1 < previous.Length;
             bool newer = historyIndex >= 0;

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using SuperFantasyKingdom;
 using SuperFantasyKingdom.UI;
 using UnityEngine;
@@ -10,6 +11,8 @@ namespace Daybook
     public sealed class DaybookPanel : MonoBehaviour
     {
         private static readonly Color32 Ink = new Color32(48, 35, 24, 255);
+        private static readonly Color32 Section = new Color32(69, 48, 32, 255);
+        private static readonly Color32 Quiet = new Color32(204, 191, 174, 255);
         private static readonly Color32 Gold = new Color32(255, 224, 158, 255);
         private static readonly Color32 Gain = new Color32(162, 243, 137, 255);
         private static readonly Color32 Loss = new Color32(255, 169, 151, 255);
@@ -27,6 +30,9 @@ namespace Daybook
         private RectTransform frame, strip, book, viewport;
         private Text fontSource, historyCaption, coverageNote;
         private float bookHeight;
+        private bool hasKingdomCharters;
+        private RectTransform charterBalance;
+        private float nextCharterLookup;
         private int revision = -1;
         private DayRecord selected;
         private bool detailed, historyHintsVisible, noteVisible;
@@ -83,6 +89,7 @@ namespace Daybook
             panel.visibility.blocksRaycasts = false;
             panel.visibility.interactable = false;
             panel.fontSource = amount;
+            panel.hasKingdomCharters = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("gkj.sfk.kingdomcharters");
             panel.frame = (RectTransform)root.transform;
             panel.frame.SetParent(resources, false);
             panel.frame.anchorMin = Vector2.zero;
@@ -141,10 +148,13 @@ namespace Daybook
             ColumnTitle("Dawn", 0.33f, 0.46f);
             ColumnTitle("Earned", 0.46f, 0.62f);
             ColumnTitle("Spent", 0.62f, 0.76f);
-            ColumnTitle("Now", 0.76f, 0.88f);
+            ColumnTitle(selected == null ? "Now" : "Last", 0.76f, 0.88f);
             ColumnTitle("Net", 0.88f, 1);
             float y = 0;
             string group = null;
+            // Discoveries and archived resources can follow their original sections.
+            // GroupBy keeps the native material order at the front of the compact strip.
+            entries = entries.GroupBy(entry => entry.Group).SelectMany(section => section).ToList();
             for (int i = 0; i < entries.Count; i++)
             {
                 var entry = entries[i];
@@ -159,6 +169,10 @@ namespace Daybook
                         "Archived stock" => "Archived Stock",
                         _ => group
                     };
+                    var band = GraphicChild<Image>(book, "Section");
+                    band.color = Section;
+                    Place(band.rectTransform, 0, 1, y, 26);
+                    band.transform.SetAsFirstSibling();
                     var heading = Label(book, titleText, 24, TextAnchor.MiddleLeft);
                     Place(heading.rectTransform, 0, 0.33f, y, 26, 5, 2);
                     heading.color = Gold;
@@ -180,7 +194,7 @@ namespace Daybook
                 icon.preserveAspect = true;
                 Place(icon.rectTransform, 0, 0, y, 24, 3, -27);
                 row.Title = Label(book, entry.Label, 23, TextAnchor.MiddleLeft);
-                Place(row.Title.rectTransform, 0, 0.33f, y, 24, icon.enabled ? 30 : 5, 2);
+                Place(row.Title.rectTransform, 0, 0.33f, y, 24, 30, 2);
                 row.Dawn = Number("Dawn", 0.33f, 0.46f, y);
                 row.Earned = Number("Earned", 0.46f, 0.62f, y);
                 row.Spent = Number("Spent", 0.62f, 0.76f, y);
@@ -256,13 +270,29 @@ namespace Daybook
             if (expanded && viewport != null)
             {
                 // Fit the expanded ledger on shorter windows in the same pixel space as the HUD.
-                float top = viewport.InverseTransformPoint(frame.position).y;
+                Vector2 topRight = viewport.InverseTransformPoint(frame.position);
                 float unit = Mathf.Abs(viewport.InverseTransformVector(frame.parent.TransformVector(Vector3.up)).y);
-                float room = top - viewport.rect.yMin - 8;
+                float room = topRight.y - AvailableBottom(topRight.x, unit) - 8;
                 if (room > 0 && unit > 0)
                     frame.localScale = Vector3.one * Mathf.Min(1, room / (frame.sizeDelta.y * unit));
             }
             return changed;
+        }
+
+        private float AvailableBottom(float right, float unit)
+        {
+            float bottom = viewport.rect.yMin;
+            if (!hasKingdomCharters) return bottom;
+            // The optional badge is created when a supply charter first incurs debt.
+            if (charterBalance == null && Time.unscaledTime >= nextCharterLookup)
+            {
+                nextCharterLookup = Time.unscaledTime + 0.25f;
+                charterBalance = GameObject.Find("/Kingdom Charters debt/Balance")?.transform as RectTransform;
+            }
+            if (charterBalance == null || !charterBalance.gameObject.activeInHierarchy) return bottom;
+            Rect badge = tooltipLayout.Bounds(charterBalance, viewport);
+            return right > badge.xMin && right - frame.rect.width * unit < badge.xMax
+                ? Mathf.Max(bottom, badge.yMax) : bottom;
         }
 
         private void SetView(bool expanded, bool showHistoryHints)
@@ -306,7 +336,9 @@ namespace Daybook
                 row.Spent.text = showGross ? entry.Spent.ToString() : "\u2013";
                 long? net = (long?)entry.Now - entry.Dawn;
                 string delta = net?.ToString("+0;-0;0") ?? "–";
-                Color32 color = net > 0 ? Gain : net < 0 ? Loss : (Color32)Color.white;
+                Color32 color = net > 0 ? Gain : net < 0 ? Loss : Quiet;
+                row.Earned.color = showGross && entry.Earned > 0 ? Gain : Quiet;
+                row.Spent.color = showGross && entry.Spent > 0 ? Loss : Quiet;
                 row.Dawn.text = entry.Dawn?.ToString() ?? "–";
                 row.Now.text = entry.Now?.ToString() ?? "–";
                 row.Net.text = delta;

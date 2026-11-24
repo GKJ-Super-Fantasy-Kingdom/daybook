@@ -11,28 +11,30 @@ Daybook shows what your kingdom earned, what it spent, and how much is left each
 ## How to Use
 
 1. After the first dawn Daybook observes, look beneath each material icon for its net change since dawn.
-2. Hold **Alt** on keyboard, **RT** on Xbox, or **R2** on PlayStation to open the ledger. Read across a row to compare **Dawn**, **Earned**, **Spent**, **Now**, and **Net**. An asterisk marks a resource observed for only part of the day.
+2. Hold **Alt** on keyboard, **RT** on Xbox, or **R2** on PlayStation to open the ledger. Read across a row to compare **Dawn**, **Earned**, **Spent**, **Now**, and **Net**. On a saved day, **Last** shows the stock at the last observation for that record. An asterisk marks a resource observed for only part of the day.
 3. Keep holding the detail key or trigger. Press **Page Up** (keyboard), **LB** (Xbox), or **L1** (PlayStation) for an older record. Press **Page Down**, **RB**, or **R1** to move toward today. The footer shows which directions are available and follows your controller bindings.
 4. Release **Alt**, **RT**, or **R2** to return directly to the live strip. Today's totals keep updating while you browse.
 
 ## Screenshots
 
-![Compact HUD with six net changes aligned beneath the material icons](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/daybook/v0.4.1/docs/screenshots/0.4.1/compact-1x.png)
+![Six daily material balances beneath the resource bar at 1×](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/daybook/v0.4.2/docs/screenshots/0.4.2/compact-1x.png)
 
-*At 1× UI scale, read straight down from a material icon to see its change since dawn.*
+*Read down from each material icon to see its net change since dawn.*
 
-![Saved day 10 ledger with stock totals and keyboard paging prompts](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/daybook/v0.4.1/docs/screenshots/0.4.1/journal-keyboard-1x.png)
+![Live Day 10 ledger beside the pinned Lumberyard upgrade at 1×](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/daybook/v0.4.2/docs/screenshots/0.4.2/live-1x.png)
 
-*The wood row shows 3 earned and 2 spent, leaving a net gain of 1. The footer shows which keys browse history.*
+*Wood started at 1. After spending it, Now reads 0 and Net reads −1.*
 
-![Expanded ledger at 1.5× UI scale with PlayStation L1 and R1 paging prompts](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/daybook/v0.4.1/docs/screenshots/0.4.1/journal-controller-1p5x.png)
+![Saved Day 10 ledger with Older and Newer bumper prompts at 1.5×](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/daybook/v0.4.2/docs/screenshots/0.4.2/saved-1p5x.png)
 
-*At 1.5×, look below the saved day for the older and newer shoulder buttons. All three images are from Daybook 0.4.1 in-game. The PlayStation capture used simulated controller input.*
+*On this saved page, wood shows 2 earned and 1 spent. Last reads 2 and Net reads +1. The footer shows both paging directions.*
+
+Captured in Daybook 0.4.2 on Super Fantasy Kingdom 0.8.068 at 1920 × 1080 with a virtual Xbox-style controller.
 
 ## Compatibility
 
 - The ledger follows both Human and Undead resource bars at UI scales 1× and 1.5×.
-- The HUD and journal controls were tested in-game alongside GKJ's [Pin a Build Cost](https://thunderstore.io/c/super-fantasy-kingdom/p/GKJ/PinABuildCost/) 0.1.0 and [Production Bottlenecks](https://thunderstore.io/c/super-fantasy-kingdom/p/GKJ/ProductionBottlenecks/) 0.1.3.
+- On Windows game build 0.8.068, the strip and ledger cleared the [Pin a Build Cost](https://thunderstore.io/c/super-fantasy-kingdom/p/GKJ/PinABuildCost/) upgrade, [Kingdom Charters](https://thunderstore.io/c/super-fantasy-kingdom/p/GKJ/KingdomCharters/) debt badge, and [Visitor Calendar](https://thunderstore.io/c/super-fantasy-kingdom/p/GKJ/VisitorCalendar/) prompt at both scales with [Production Bottlenecks](https://thunderstore.io/c/super-fantasy-kingdom/p/GKJ/ProductionBottlenecks/) enabled.
 - With ILM's [CheatMenu](https://thunderstore.io/c/super-fantasy-kingdom/p/ILM/CheatMenu/) 1.0.3 set to triple coin rewards, Daybook counted a 5-coin reward as 15 earned and a subsequent 2-coin purchase as 2 spent.
 - If you use ownlyme's [Tavern Food Priorities](https://thunderstore.io/c/super-fantasy-kingdom/p/ownlyme/TavernFoodPriorities/), the food rows show kingdom stock. Meals eaten from the tavern's private stores are outside those totals.
 - If a mod silently adds and removes stock between observations, the **Earned** and **Spent** columns can miss those changes.

@@ -125,6 +125,15 @@ internal static class StockChecks
             throw new Exception("Gap-only change did not repaint the HUD");
         refresh.Invoke(panel, new object[] { "Waiting for dawn", false });
         if (earned.text != "\u2013" || spent.text != "\u2013") throw new Exception("Pre-dawn counters");
+        AccessTools.Field(balance, "Now").SetValue(b, 1);
+        refresh.Invoke(panel, new object[] { "Live Day 4", true });
+        if (net.text != "-2" || net.color != spent.color || net.color == earned.color)
+            throw new Exception("Loss must retain its sign and match the spending color");
+        AccessTools.Field(balance, "Now").SetValue(b, 3);
+        refresh.Invoke(panel, new object[] { "Live Day 4", true });
+        if (net.text != "0" || net.color == spent.color || net.color == earned.color)
+            throw new Exception("Unchanged stock must use a distinct neutral color");
+        Console.WriteLine("PASS signed and neutral changes in the ledger");
         Console.WriteLine("PASS partial, complete, archived and pre-dawn HUD text");
     }
 

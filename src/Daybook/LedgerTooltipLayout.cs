@@ -67,7 +67,7 @@ namespace Daybook
                 Bounds(frame, viewport).Overlaps(Bounds(obstacle, viewport));
         }
 
-        private Rect Bounds(RectTransform target, RectTransform viewport)
+        internal Rect Bounds(RectTransform target, RectTransform viewport)
         {
             target.GetWorldCorners(corners);
             var min = viewport.InverseTransformPoint(corners[0]);

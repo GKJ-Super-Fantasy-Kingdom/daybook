@@ -1,6 +1,6 @@
 {
   "name": "Daybook",
-  "version_number": "0.4.1",
+  "version_number": "0.4.2",
   "website_url": "https://github.com/GKJ-Super-Fantasy-Kingdom/daybook",
   "description": "Track daily resource gains and spending. Browse daily balances and saved ledgers with keyboard or controller.",
   "dependencies": [
