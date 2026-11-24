@@ -1,3 +1,5 @@
+# Daybook
+
 Daybook shows what your kingdom earned, what it spent, and how much is left each day. Check six materials at a glance beneath the resource bar, or open the ledger to compare today's supplies with earlier days in the same run.
 
 ## Features
@@ -8,16 +10,10 @@ Daybook shows what your kingdom earned, what it spent, and how much is left each
 
 ## How to Use
 
-After Daybook sees its first dawn, read the number beneath each material icon for its net change. Open the ledger to compare **Dawn**, **Earned**, **Spent**, **Now**, and **Net**. An asterisk marks a resource Daybook observed for only part of the day.
-
-| Action | Keyboard | Xbox | PlayStation |
-| --- | --- | --- | --- |
-| Open the ledger | Hold Alt | Hold RT | Hold R2 |
-| Page to an older record | Alt + Page Up | RT + LB | R2 + L1 |
-| Page toward the current day | Alt + Page Down | RT + RB | R2 + R1 |
-| Return to the live strip | Release Alt | Release RT | Release R2 |
-
-These are the default controls. The ledger shows the paging directions available from the selected day and follows your in-game controller bindings. Today's totals keep updating while you browse.
+1. After the first dawn Daybook observes, look beneath each material icon for its net change since dawn.
+2. Hold **Alt** on keyboard, **RT** on Xbox, or **R2** on PlayStation to open the ledger. Read across a row to compare **Dawn**, **Earned**, **Spent**, **Now**, and **Net**. An asterisk marks a resource observed for only part of the day.
+3. Keep holding the detail key or trigger. Press **Page Up** (keyboard), **LB** (Xbox), or **L1** (PlayStation) for an older record. Press **Page Down**, **RB**, or **R1** to move toward today. The footer shows which directions are available and follows your controller bindings.
+4. Release **Alt**, **RT**, or **R2** to return directly to the live strip. Today's totals keep updating while you browse.
 
 ## Screenshots
 
@@ -35,10 +31,14 @@ These are the default controls. The ledger shows the paging directions available
 
 ## Compatibility
 
-Daybook supports the Human and Undead resource bars and both in-game UI scales. It was tested alongside Pin a Build Cost and Production Bottlenecks. Mods that change stock silently between observations can hide offsetting gains and spending from the daily totals.
+- The ledger follows both Human and Undead resource bars at UI scales 1× and 1.5×.
+- The HUD and journal controls were tested in-game alongside GKJ's [Pin a Build Cost](https://thunderstore.io/c/super-fantasy-kingdom/p/GKJ/PinABuildCost/) 0.1.0 and [Production Bottlenecks](https://thunderstore.io/c/super-fantasy-kingdom/p/GKJ/ProductionBottlenecks/) 0.1.3.
+- With ILM's [CheatMenu](https://thunderstore.io/c/super-fantasy-kingdom/p/ILM/CheatMenu/) 1.0.3 set to triple coin rewards, Daybook counted a 5-coin reward as 15 earned and a subsequent 2-coin purchase as 2 spent.
+- If you use ownlyme's [Tavern Food Priorities](https://thunderstore.io/c/super-fantasy-kingdom/p/ownlyme/TavernFoodPriorities/), the food rows show kingdom stock. Meals eaten from the tavern's private stores are outside those totals.
+- If a mod silently adds and removes stock between observations, the **Earned** and **Spent** columns can miss those changes.
 
 ## Installation
 
 1. Choose **Install with App** and select your Super Fantasy Kingdom profile in Thunderstore Mod Manager or r2modman.
-2. Install Daybook with its listed dependencies, **BepInExPack** and **HideManagerGameObject_Config**.
+2. Install Daybook with its listed dependencies, [BepInExPack](https://thunderstore.io/c/super-fantasy-kingdom/p/BepInEx/BepInExPack/) and [HideManagerGameObject_Config](https://thunderstore.io/c/super-fantasy-kingdom/p/BepInEx/HideManagerGameObject_Config/).
 3. Choose **Start modded** and enter your kingdom. To keep recording with the HUD hidden, set `ShowOverlay = false` in your profile's `BepInEx/config/sfk.daybook.cfg`.
