@@ -1,3 +1,7 @@
+## 0.4.3
+
+Clarify the mod’s description and compatibility for players.
+
 ## 0.4.2
 
 - Give each resource group one shaded heading, align names when an icon is missing, and distinguish earned, spent, and unchanged amounts.

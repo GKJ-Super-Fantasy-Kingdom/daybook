@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Daybook
 {
-    [BepInPlugin("sfk.daybook", "Daybook", "0.4.2")]
+    [BepInPlugin("sfk.daybook", "Daybook", "0.4.3")]
     public sealed class DaybookPlugin : BaseUnityPlugin
     {
         private ConfigEntry<bool> showOverlay;

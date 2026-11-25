@@ -1,8 +1,8 @@
 {
   "name": "Daybook",
-  "version_number": "0.4.2",
+  "version_number": "0.4.3",
   "website_url": "https://github.com/GKJ-Super-Fantasy-Kingdom/daybook",
-  "description": "Track daily resource gains and spending. Browse daily balances and saved ledgers with keyboard or controller.",
+  "description": "Track what your kingdom earns and spends each day. Check net changes at a glance and browse earlier days in the resource ledger.",
   "dependencies": [
     "BepInEx-BepInExPack-5.4.2305",
     "BepInEx-HideManagerGameObject_Config-5.4.2304"
