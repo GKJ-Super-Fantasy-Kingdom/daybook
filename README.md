@@ -91,3 +91,7 @@ The 0.3.0 HUD was checked in both kingdoms on Windows with game version 0.8.067 
 Bug reports and pull requests are welcome. See the [contribution guide](CONTRIBUTING.md) for local testing and reporting instructions.
 
 The original mod code is available under the [MIT License](LICENSE). Super Fantasy Kingdom, its game assets, and third-party dependencies retain their respective licenses and ownership.
+
+## Support
+
+[Support GKJ Games on Ko-fi](https://ko-fi.com/gkj_games)

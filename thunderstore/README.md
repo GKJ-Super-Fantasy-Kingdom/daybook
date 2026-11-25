@@ -44,3 +44,7 @@ Captured in Daybook 0.4.2 on Super Fantasy Kingdom 0.8.068 at 1920 × 1080 with 
 1. Choose **Install with App** and select your Super Fantasy Kingdom profile in Thunderstore Mod Manager or r2modman.
 2. Install Daybook with its listed dependencies, [BepInExPack](https://thunderstore.io/c/super-fantasy-kingdom/p/BepInEx/BepInExPack/) and [HideManagerGameObject_Config](https://thunderstore.io/c/super-fantasy-kingdom/p/BepInEx/HideManagerGameObject_Config/).
 3. Choose **Start modded** and enter your kingdom. To keep recording with the HUD hidden, set `ShowOverlay = false` in your profile's `BepInEx/config/sfk.daybook.cfg`.
+
+## Support
+
+[Support GKJ Games on Ko-fi](https://ko-fi.com/gkj_games)
