@@ -8,7 +8,9 @@ using Daybook;
 internal static class Program
 {
     private static readonly Guid Run = new Guid("66d2c7f3-62df-48e6-a7ea-ae85cb987cdc");
+    private static readonly Guid PayloadRun = new Guid("7201c6c9-887f-4425-a17c-207fac1ad5d5");
     private static readonly string Key = Journal.Fingerprint("native checkpoint");
+    private const string Payload = "{\"day\":6,\"coins\":14,\"hash\":\"\"}";
 
     private static void Require(bool condition, string name)
     {
@@ -28,6 +30,7 @@ internal static class Program
             var journal = new Journal(root.FullName, 1, 0, Run);
             CatalogChecks.Run(journal);
             CheckPaging(root.FullName);
+            CheckPayloadCheckpoints(root.FullName);
             var boards = new Balance { Dawn = 3, Now = 3 };
             var record = new DayRecord { Day = 7, Rows = { [1] = boards } };
             journal.Save(record);
@@ -48,6 +51,49 @@ internal static class Program
             Console.WriteLine("Passed resource catalog, accounting, journal write, restart, rollback, history and isolation checks.");
         }
         finally { root.Delete(true); }
+    }
+
+    private static void CheckPayloadCheckpoints(string root)
+    {
+        var journal = new Journal(root, 3, 1, PayloadRun);
+        const string unsaved = "{\"day\":6,\"coins\":11,\"hash\":\"\"}";
+        var key = Journal.CheckpointKey("", Payload);
+        var otherKey = Journal.CheckpointKey("", unsaved);
+        Require(key != otherKey && key == Journal.CheckpointKey(null, Payload) &&
+            Journal.CheckpointKey(null, null) == null, "hashless identity is based on the selected payload");
+        var record = new DayRecord { Day = 7, Rows = { [12] = new Balance { Dawn = 11, Now = 14, Earned = 5, Spent = 2 } } };
+        journal.Save(record);
+        journal.SaveCheckpoint(key, record);
+        journal.SaveCheckpoint(key, record);
+
+        var sameDay = new Journal(root, 3, 1, PayloadRun);
+        sameDay.ResumeAttempt(sameDay.LoadCheckpoint(key), 7);
+        Require(sameDay.Previous().Length == 0, "same checkpoint and day reuse the unchanged attempt");
+
+        record.Rows[12].Observe(11);
+        journal.Save(record);
+        var morning = new Journal(root, 3, 1, PayloadRun);
+        var path = morning.Previous()[0];
+        Require(morning.Read(path).Rows[12].Spent == 5, "unsaved changes reached live per-day file");
+        Require(morning.LoadCheckpoint(otherKey) == null, "same day with different payload cannot select the saved ledger");
+        morning.FinalizeAttempt(key, 8);
+        Require(morning.Read(path).Rows[12].Spent == 5, "unrelated dawn cannot finalize the night checkpoint");
+        morning.FinalizeAttempt(key, 7);
+        morning.FinalizeAttempt(key, 7);
+        var coins = morning.Read(path).Rows[12];
+        Require(morning.Previous().Length == 1 && coins.Now == 14 && coins.Earned == 5 && coins.Spent == 2,
+            "tavern transition restores the committed totals to the original page exactly once");
+        Require(Directory.GetFiles(Path.GetDirectoryName(path), "save-payload-*.json").Length == 1,
+            "repeated native Save with the same payload keeps one sidecar");
+        Require(new Journal(root, 3, 0, PayloadRun).LoadCheckpoint(key) == null &&
+            new Journal(root, 4, 1, PayloadRun).LoadCheckpoint(key) == null &&
+            new Journal(root, 3, 1, Guid.NewGuid()).LoadCheckpoint(key) == null, "payload keys remain scoped to slot, kingdom and run");
+
+        const string nativeHash = "archived native hash";
+        string legacyPath = Path.Combine(Path.GetDirectoryName(path), "save-" + Journal.Fingerprint(nativeHash) + ".json");
+        File.Copy(path, legacyPath);
+        var legacy = morning.LoadCheckpoint(Journal.CheckpointKey(nativeHash, Payload));
+        Require(legacy.Rows[12].Now == 14 && legacy.Attempt == null, "older hashed sidecars still load without attempt metadata");
     }
 
     private static void CheckPaging(string root)
@@ -83,6 +129,11 @@ internal static class Program
 
     private static void VerifyAfterRestart(string root)
     {
+        var payloadJournal = new Journal(root, 3, 1, PayloadRun);
+        var hashless = payloadJournal.LoadCheckpoint(Journal.CheckpointKey("", Payload));
+        var page = payloadJournal.Read(payloadJournal.Previous()[0]).Rows[12];
+        Require(payloadJournal.Previous().Length == 1 && hashless.Rows[12].Now == 14 && page.Spent == 2,
+            "hashless checkpoint and its single finalized history page survive process restart");
         var journal = new Journal(root, 1, 0, Run);
         var checkpoint = journal.LoadCheckpoint(Key);
         var boards = checkpoint.Rows[1];

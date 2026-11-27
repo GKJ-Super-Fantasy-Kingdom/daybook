@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Daybook
 {
-    [BepInPlugin("sfk.daybook", "Daybook", "0.4.3")]
+    [BepInPlugin("sfk.daybook", "Daybook", "0.4.4")]
     public sealed class DaybookPlugin : BaseUnityPlugin
     {
         private ConfigEntry<bool> showOverlay;
@@ -30,7 +30,7 @@ namespace Daybook
         private float nextWrite, nextPoll, nextCatalog;
         private string lastError;
         private Harmony patches;
-        internal string LoadedHash;
+        internal string LoadedCheckpoint;
 
         private void Awake()
         {
@@ -38,6 +38,8 @@ namespace Daybook
             ControllerLedger.Plugin = this;
             GameCheckpoints.Plugin = this;
             patches = new Harmony("sfk.daybook.checkpoints");
+            patches.PatchAll(typeof(GameCheckpoints.ReadPayload));
+            patches.PatchAll(typeof(GameCheckpoints.SelectRead));
             patches.PatchAll(typeof(GameCheckpoints.Load));
             patches.PatchAll(typeof(GameCheckpoints.Save));
             patches.PatchAll(typeof(ControllerLedger.OlderAction));
@@ -99,13 +101,13 @@ namespace Daybook
             history = null;
             historyIndex = -1;
             previous = Array.Empty<string>();
-            LoadedHash = null;
+            LoadedCheckpoint = null;
         }
 
         private void RecordDawn(int newDay)
         {
             // Finish the old record before sampling the new kingdom or dawn.
-            string loaded = LoadedHash;
+            string loaded = LoadedCheckpoint;
             CloseDay();
             if (!BindLedger()) return;
             day = newDay;
@@ -118,10 +120,12 @@ namespace Daybook
                     SettingsManager.Instance.GetProfile() + 1, (int)ledger.Race.GetRace(), run);
                 try
                 {
-                    previous = journal.Previous();
                     if (!string.IsNullOrEmpty(loaded))
-                        restored = journal.LoadCheckpoint(Journal.Fingerprint(loaded));
+                        restored = journal.LoadCheckpoint(loaded);
+                    journal.ResumeAttempt(restored, day);
                 }
+                catch (Exception e) { ReportJournalError(e); }
+                try { previous = journal.Previous(); }
                 catch (Exception e) { ReportJournalError(e); }
             }
             ledger.BeginDay(day, restored);
@@ -148,14 +152,24 @@ namespace Daybook
             catch (Exception e) { ReportJournalError(e); }
         }
 
-        internal void Checkpoint(string savedRun, string hash)
+        internal void Checkpoint(string savedRun, string key)
         {
             if (!tracking || journal == null || ledger.Kingdom != ResourceManager.Instance ||
-                !Guid.TryParse(savedRun, out var id) || id != run || string.IsNullOrEmpty(hash)) return;
+                !Guid.TryParse(savedRun, out var id) || id != run || string.IsNullOrEmpty(key)) return;
             dirty |= ledger.RefreshCatalog();
             dirty |= ledger.Read();
-            journal.SaveCheckpoint(Journal.Fingerprint(hash), ledger.Snapshot(day));
+            journal.SaveCheckpoint(key, ledger.Snapshot(day));
             Flush();
+        }
+
+        internal void FinalizeCheckpoint(string savedRun, string key, int day)
+        {
+            if (!Guid.TryParse(savedRun, out var id) || SettingsManager.Instance == null || MainManager.Instance == null)
+                return;
+            if (tracking && run == id) CloseDay();
+            var archived = new Journal(Path.Combine(Application.persistentDataPath, "Daybook"),
+                SettingsManager.Instance.GetProfile() + 1, (int)MainManager.Instance.GetSelectedKingdom(), id);
+            archived.FinalizeAttempt(key, day);
         }
 
         private void ResourceChanged(ResourceType type)
@@ -264,9 +278,9 @@ namespace Daybook
             if (player != null)
                 expanded &= player.actions.FindAction(ControllerLedger.Details)?.IsPressed() == true;
             bool canBrowse = expanded && CanBrowseHistory();
-            bool showHistoryHints = canBrowse && player != null;
             bool changedView = false;
             var keys = Keyboard.current;
+            bool showHistoryHints = canBrowse && (player != null || keys != null);
             if (!expanded) changedView |= SelectHistory(-1);
             else if (canBrowse && player == null && keys != null)
             {
@@ -284,13 +298,8 @@ namespace Daybook
                 : $"Saved Day {history.Day} ({historyIndex + 1}/{previous.Length})";
             bool older = historyIndex + 1 < previous.Length;
             bool newer = historyIndex >= 0;
-            if (canBrowse && player == null && keys != null)
-            {
-                if (older) caption += "   PgUp Older";
-                if (newer) caption += older ? " / PgDn Newer" : "   PgDn Newer";
-            }
             panel.Refresh(caption, recording);
-            if (showHistoryHints) panel.UpdateControllerHints(player, older, newer);
+            if (showHistoryHints) panel.UpdatePagingHints(player, older, newer);
         }
     }
 }

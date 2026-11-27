@@ -6,7 +6,7 @@ Daybook shows what your kingdom earned, what it spent, and how much is left each
 
 - **Separate gains and spending.** If you gain 8 boards and spend 8 on buildings, the ledger shows 8 earned, 8 spent, and 0 net. You can see the activity even when your stock ends where it started.
 - **Follow your kingdom's resources.** The full ledger covers materials, food and supplies, currency, and progression. Human kingdoms can track wood and bread, while Undead kingdoms can track bones and souls.
-- **Keep a daily history.** Daybook saves records locally for each profile, kingdom, and run. Continue restores the ledger for a matching checkpoint. If you replay a dawn, the earlier attempt stays available to browse.
+- **Keep a daily history.** Daybook keeps a separate ledger for each profile, kingdom, and run. When you Continue from a saved night, the ledger shows the balances from that checkpoint after you leave the tavern.
 
 ## How to Use
 
@@ -17,21 +17,17 @@ Daybook shows what your kingdom earned, what it spent, and how much is left each
 
 ## Screenshots
 
-![Six daily material balances beneath the resource bar at 1×](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/daybook/v0.4.2/docs/screenshots/0.4.2/compact-1x.png)
+![Human saved ledger at 1× with Xbox LB and RB prompts](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/daybook/v0.4.4/docs/screenshots/current/human-ledger-1x.png)
 
-*Read down from each material icon to see its net change since dawn.*
+*The Human ledger shows three wood earned, two spent, and a net gain of one.*
 
-![Live Day 10 ledger beside the pinned Lumberyard upgrade at 1×](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/daybook/v0.4.2/docs/screenshots/0.4.2/live-1x.png)
+![Undead saved ledger at 1.5× with PlayStation L1 and R1 prompts](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/daybook/v0.4.4/docs/screenshots/current/undead-ledger-1p5x.png)
 
-*Wood started at 1. After spending it, Now reads 0 and Net reads −1.*
-
-![Saved Day 10 ledger with Older and Newer bumper prompts at 1.5×](https://raw.githubusercontent.com/GKJ-Super-Fantasy-Kingdom/daybook/v0.4.2/docs/screenshots/0.4.2/saved-1p5x.png)
-
-*On this saved page, wood shows 2 earned and 1 spent. Last reads 2 and Net reads +1. The footer shows both paging directions.*
+*The Undead ledger uses its own resource list. L1 and R1 page through saved days while the ledger is open.*
 
 ## Compatibility
 
-- Works with Super Fantasy Kingdom **0.8.068** and the other [GKJ mods](https://thunderstore.io/c/super-fantasy-kingdom/p/GKJ/).
+- Works with Super Fantasy Kingdom **0.8.070** and the other [GKJ mods](https://thunderstore.io/c/super-fantasy-kingdom/p/GKJ/).
 - The ledger follows Human and Undead resources at 1× and 1.5× UI scale.
 - The HUD shares space with [Pin a Build Cost](https://thunderstore.io/c/super-fantasy-kingdom/p/GKJ/PinABuildCost/), [Production Bottlenecks](https://thunderstore.io/c/super-fantasy-kingdom/p/GKJ/ProductionBottlenecks/), [Kingdom Charters](https://thunderstore.io/c/super-fantasy-kingdom/p/GKJ/KingdomCharters/), and [Visitor Calendar](https://thunderstore.io/c/super-fantasy-kingdom/p/GKJ/VisitorCalendar/).
 - With [Tavern Food Priorities](https://thunderstore.io/c/super-fantasy-kingdom/p/ownlyme/TavernFoodPriorities/), the food rows track your kingdom’s stock. Meals taken from the tavern’s separate stores are outside those totals.
@@ -43,7 +39,5 @@ Daybook shows what your kingdom earned, what it spent, and how much is left each
 1. Choose **Install with App** and select your Super Fantasy Kingdom profile in Thunderstore Mod Manager or r2modman.
 2. Install Daybook with its listed dependencies, [BepInExPack](https://thunderstore.io/c/super-fantasy-kingdom/p/BepInEx/BepInExPack/) and [HideManagerGameObject_Config](https://thunderstore.io/c/super-fantasy-kingdom/p/BepInEx/HideManagerGameObject_Config/).
 3. Choose **Start modded** and enter your kingdom. To keep recording with the HUD hidden, set `ShowOverlay = false` in your profile's `BepInEx/config/sfk.daybook.cfg`.
-
-## Support
 
 [Support GKJ Games on Ko-fi](https://ko-fi.com/gkj_games)

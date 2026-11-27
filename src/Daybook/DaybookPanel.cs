@@ -10,23 +10,31 @@ namespace Daybook
 {
     public sealed class DaybookPanel : MonoBehaviour
     {
-        private static readonly Color32 Ink = new Color32(48, 35, 24, 255);
+        private static readonly Color32 Ink = new Color32(39, 29, 23, 255);
         private static readonly Color32 Section = new Color32(69, 48, 32, 255);
-        private static readonly Color32 Quiet = new Color32(204, 191, 174, 255);
+        private static readonly Color32 Rule = new Color32(117, 83, 54, 255);
+        private static readonly Color32 Stock = new Color32(237, 225, 208, 255);
+        private static readonly Color32 Quiet = new Color32(175, 157, 141, 255);
         private static readonly Color32 Gold = new Color32(255, 224, 158, 255);
-        private static readonly Color32 Gain = new Color32(162, 243, 137, 255);
-        private static readonly Color32 Loss = new Color32(255, 169, 151, 255);
+        private static readonly Color32 Gain = new Color32(177, 244, 152, 255);
+        private static readonly Color32 Loss = new Color32(255, 178, 155, 255);
+        private static readonly Color32 NetCell = new Color32(56, 40, 28, 255);
+        private static readonly Color32 SavedBand = new Color32(71, 44, 53, 255);
+        private static readonly Color32 SavedRule = new Color32(177, 115, 124, 255);
+        private static readonly Color32 SavedTitle = new Color32(255, 219, 206, 255);
 
         private sealed class Row
         {
             internal LedgerEntry Entry;
             internal Text Title, Compact, Dawn, Earned, Spent, Now, Net;
+            internal RectTransform NativeCounter, CompactDivider;
             internal int? LastDawn, LastNow;
             internal long LastEarned, LastSpent;
             internal bool Painted, ShowGross, Partial;
         }
 
         private readonly List<Row> rows = new List<Row>();
+        private UIResourceAmount[] nativeCounters;
         private RectTransform frame, strip, book, viewport;
         private Text fontSource, historyCaption, coverageNote;
         private float bookHeight;
@@ -50,6 +58,7 @@ namespace Daybook
         private void PlaceTooltip()
         {
             if (frame == null || viewport == null || visibility == null) return;
+            if (!detailed) AlignCompactValues();
             var overlays = OverlayManager.Instance;
             var obstructed = false;
             if (overlays != null && overlays.IsOpen())
@@ -68,7 +77,8 @@ namespace Daybook
         private sealed class ButtonHint
         {
             internal RectTransform Root;
-            internal Image Icon;
+            internal Image Icon, Keycap;
+            internal Text Key;
             internal Text Label;
             internal string Action, Verb;
         }
@@ -89,6 +99,8 @@ namespace Daybook
             panel.visibility.blocksRaycasts = false;
             panel.visibility.interactable = false;
             panel.fontSource = amount;
+            panel.nativeCounters = HarmonyLib.AccessTools.Field(typeof(UIHeader), "mainResources")
+                ?.GetValue(header) as UIResourceAmount[];
             panel.hasKingdomCharters = BepInEx.Bootstrap.Chainloader.PluginInfos.ContainsKey("gkj.sfk.kingdomcharters");
             panel.frame = (RectTransform)root.transform;
             panel.frame.SetParent(resources, false);
@@ -146,14 +158,15 @@ namespace Daybook
         private void BuildRows(List<LedgerEntry> entries, int headerCount)
         {
             ColumnTitle("Dawn", 0.33f, 0.46f);
-            ColumnTitle("Earned", 0.46f, 0.62f);
-            ColumnTitle("Spent", 0.62f, 0.76f);
+            ColumnTitle("Earned", 0.46f, 0.62f, Gain);
+            ColumnTitle("Spent", 0.62f, 0.76f, Loss);
             ColumnTitle(selected == null ? "Now" : "Last", 0.76f, 0.88f);
             ColumnTitle("Net", 0.88f, 1);
             float y = 0;
             string group = null;
             // Discoveries and archived resources can follow their original sections.
             // GroupBy keeps the native material order at the front of the compact strip.
+            var header = entries.Take(headerCount).ToList();
             entries = entries.GroupBy(entry => entry.Group).SelectMany(section => section).ToList();
             for (int i = 0; i < entries.Count; i++)
             {
@@ -180,14 +193,21 @@ namespace Daybook
                 }
 
                 var row = new Row { Entry = entry };
-                if (i < headerCount)
+                int counter = header.IndexOf(entry);
+                if (counter >= 0)
                 {
-                    float left = (float)i / headerCount;
-                    float right = (float)(i + 1) / headerCount;
+                    float left = (float)counter / headerCount;
+                    float right = (float)(counter + 1) / headerCount;
+                    if (counter > 0)
+                        row.CompactDivider = Band(strip, "Material divider", left, left, 4, 18, Rule, 0, -1)
+                            .rectTransform;
                     row.Compact = Label(strip, "Net " + entry.Type, 26, TextAnchor.MiddleCenter);
                     Place(row.Compact.rectTransform, left, right, 0, 26);
+                    if (nativeCounters != null && counter < nativeCounters.Length && nativeCounters[counter] != null)
+                        row.NativeCounter = nativeCounters[counter].transform as RectTransform;
                 }
 
+                Band(book, "Net cell", 0.88f, 1, y, 24, NetCell);
                 var icon = GraphicChild<Image>(book, entry.Type + " icon");
                 icon.sprite = entry.Icon;
                 icon.enabled = icon.sprite != null;
@@ -196,21 +216,25 @@ namespace Daybook
                 row.Title = Label(book, entry.Label, 23, TextAnchor.MiddleLeft);
                 Place(row.Title.rectTransform, 0, 0.33f, y, 24, 30, 2);
                 row.Dawn = Number("Dawn", 0.33f, 0.46f, y);
+                row.Dawn.color = Stock;
                 row.Earned = Number("Earned", 0.46f, 0.62f, y);
                 row.Spent = Number("Spent", 0.62f, 0.76f, y);
                 row.Now = Number("Now", 0.76f, 0.88f, y);
+                row.Now.color = Stock;
                 row.Net = Number("Net", 0.88f, 1, y);
                 rows.Add(row);
                 y += 24;
             }
-            historyCaption = Label(book, "", 21, TextAnchor.MiddleCenter);
-            historyCaption.color = Gold;
+            Band(book, "Selected day", 0, 1, y, 26, selected == null ? Section : SavedBand);
+            Band(book, "Selected day rule", 0, 1, y, 2, selected == null ? Rule : SavedRule);
+            historyCaption = Label(book, "", 23, TextAnchor.MiddleCenter);
+            historyCaption.color = selected == null ? Gold : SavedTitle;
             Place(historyCaption.rectTransform, 0, 1, y, 26);
             coverageNote = Label(book, "* Counts start at first observation and exclude gaps.", 20, TextAnchor.MiddleCenter);
             coverageNote.color = Gold;
             bookHeight = y + 36;
-            older = MakeHint(book, ControllerLedger.Older, "Older", 0.18f, 0.50f, y + 26);
-            newer = MakeHint(book, ControllerLedger.Newer, "Newer", 0.55f, 0.90f, y + 26);
+            older = MakeHint(book, ControllerLedger.Older, "Older", 0, 0.5f, y + 26);
+            newer = MakeHint(book, ControllerLedger.Newer, "Newer", 0.5f, 1, y + 26);
         }
 
         private ButtonHint MakeHint(RectTransform parent, string action, string verb,
@@ -221,36 +245,83 @@ namespace Daybook
             Place(root, left, right, top, 26);
             var icon = GraphicChild<Image>(root, "Button");
             icon.preserveAspect = true;
-            Place(icon.rectTransform, 0, 0, 0, 24, 0, -26);
-            var label = Label(root, verb, 20, TextAnchor.MiddleLeft);
-            return new ButtonHint { Root = root, Icon = icon, Label = label, Action = action, Verb = verb };
+            var keycap = Band(root, "Keycap", 0, 0, 3, 20, Section, 0, -52);
+            var key = Label(keycap.rectTransform, "", 19, TextAnchor.MiddleCenter);
+            key.color = Gold;
+            Place(key.rectTransform, 0, 1, 0, 20, 2, 2);
+            var label = Label(root, verb, 21, TextAnchor.MiddleLeft);
+            return new ButtonHint { Root = root, Icon = icon, Keycap = keycap, Key = key,
+                Label = label, Action = action, Verb = verb };
         }
 
-        internal void UpdateControllerHints(PlayerInput player, bool canGoOlder, bool canGoNewer)
+        internal void UpdatePagingHints(PlayerInput player, bool canGoOlder, bool canGoNewer)
         {
-            ShowHint(older, player, canGoOlder);
-            ShowHint(newer, player, canGoNewer);
+            ShowHint(older, player, "PgUp", canGoOlder);
+            ShowHint(newer, player, "PgDn", canGoNewer);
         }
 
-        private static void ShowHint(ButtonHint hint, PlayerInput player, bool available)
+        private static void ShowHint(ButtonHint hint, PlayerInput player, string keyboardKey, bool available)
         {
             string binding = "";
-            var sprite = available ? ControllerLedger.Glyph(player, hint.Action, out binding) : null;
+            Sprite sprite = null;
+            if (available)
+            {
+                if (player == null) binding = keyboardKey;
+                else sprite = ControllerLedger.Glyph(player, hint.Action, out binding);
+            }
             bool visible = sprite != null || !string.IsNullOrEmpty(binding);
             hint.Root.gameObject.SetActive(visible);
             if (!visible) return;
             hint.Icon.sprite = sprite;
             hint.Icon.enabled = sprite != null;
-            hint.Label.text = sprite == null && !string.IsNullOrEmpty(binding)
-                ? binding + "  " + hint.Verb : hint.Verb;
-            Place(hint.Label.rectTransform, 0, 1, 0, 26, sprite != null ? 29 : 0, 2);
+            bool keyboard = sprite == null && player == null;
+            hint.Keycap.gameObject.SetActive(keyboard);
+            if (keyboard) hint.Key.text = binding;
+            hint.Label.text = sprite != null || keyboard ? hint.Verb : binding + "  " + hint.Verb;
+
+            float promptWidth = sprite != null ? 26 : keyboard ? 52 : 0;
+            float labelOffset = promptWidth > 0 ? promptWidth + 4 : 0;
+            float labelWidth = Mathf.Min(Mathf.Ceil(hint.Label.preferredWidth) + 2,
+                Mathf.Max(0, hint.Root.rect.width - labelOffset - 12));
+            // Center each complete shortcut in its half, including the binding and its label.
+            float left = -(labelOffset + labelWidth) / 2;
+            if (sprite != null)
+                Place(hint.Icon.rectTransform, 0.5f, 0.5f, 1, 24, left, -left - promptWidth);
+            else if (keyboard)
+                Place(hint.Keycap.rectTransform, 0.5f, 0.5f, 3, 20, left, -left - promptWidth);
+            Place(hint.Label.rectTransform, 0.5f, 0.5f, 0, 26, left + labelOffset, left);
         }
 
-        private void ColumnTitle(string title, float left, float right)
+        private void ColumnTitle(string title, float left, float right, Color32? accent = null)
         {
             var label = Label(book, title, 23, TextAnchor.MiddleRight);
             Place(label.rectTransform, left, right, 0, 26, 1, 5);
-            label.color = Gold;
+            label.color = accent ?? Gold;
+        }
+
+        private void AlignCompactValues()
+        {
+            foreach (var row in rows)
+            {
+                var counter = row.NativeCounter;
+                if (counter == null || !counter.gameObject.activeInHierarchy) continue;
+
+                // Align to the live HUD slots after Unity's layout pass, including at large UI scale.
+                var bounds = counter.rect;
+                float left = strip.InverseTransformPoint(counter.TransformPoint(new Vector3(bounds.xMin, 0))).x
+                    - strip.rect.xMin;
+                float right = strip.InverseTransformPoint(counter.TransformPoint(new Vector3(bounds.xMax, 0))).x
+                    - strip.rect.xMin;
+                var label = row.Compact.rectTransform;
+                if (right <= left || (label.anchorMax.x == 0 &&
+                    Mathf.Approximately(label.offsetMin.x, left) &&
+                    Mathf.Approximately(label.offsetMax.x, right)))
+                    continue;
+
+                Place(label, 0, 0, 0, 26, left, -right);
+                if (row.CompactDivider != null)
+                    Place(row.CompactDivider, 0, 0, 4, 18, left - 2, 1 - left);
+            }
         }
 
         private Text Number(string name, float left, float right, float y)
@@ -358,6 +429,15 @@ namespace Daybook
             var graphic = child.AddComponent<T>();
             graphic.raycastTarget = false;
             return graphic;
+        }
+
+        private static Image Band(RectTransform parent, string name, float left, float right,
+            float top, float height, Color32 color, float insetLeft = 0, float insetRight = 0)
+        {
+            var band = GraphicChild<Image>(parent, name);
+            band.color = color;
+            Place(band.rectTransform, left, right, top, height, insetLeft, insetRight);
+            return band;
         }
 
         private Text Label(RectTransform parent, string text, int size, TextAnchor alignment)

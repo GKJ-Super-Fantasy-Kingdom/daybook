@@ -6,7 +6,7 @@ Daybook shows what your kingdom earned, what it spent, and how much is left each
 
 - **Separate gains and spending.** If you gain 8 boards and spend 8 on buildings, the ledger shows 8 earned, 8 spent, and 0 net. You can see the activity even when your stock ends where it started.
 - **Follow your kingdom's resources.** The full ledger covers materials, food and supplies, currency, and progression. Human kingdoms can track wood and bread, while Undead kingdoms can track bones and souls.
-- **Keep a daily history.** Daybook saves records locally for each profile, kingdom, and run. Continue restores the ledger for a matching checkpoint. If you replay a dawn, the earlier attempt stays available to browse.
+- **Keep a daily history.** Daybook keeps a separate ledger for each profile, kingdom, and run. When you Continue from a saved night, the ledger shows the balances from that checkpoint after you leave the tavern.
 
 ## How to Use
 
@@ -17,23 +17,18 @@ Daybook shows what your kingdom earned, what it spent, and how much is left each
 
 ## Screenshots
 
-![Six daily material balances beneath the resource bar at 1×](docs/screenshots/0.4.2/compact-1x.png)
+![Human saved ledger at 1× with Xbox LB and RB prompts](docs/screenshots/current/human-ledger-1x.png)
 
-*Read down from each material icon to see its net change since dawn.*
+*The Human ledger shows three wood earned, two spent, and a net gain of one.*
 
-![Live Day 10 ledger beside the pinned Lumberyard upgrade at 1×](docs/screenshots/0.4.2/live-1x.png)
+![Undead saved ledger at 1.5× with PlayStation L1 and R1 prompts](docs/screenshots/current/undead-ledger-1p5x.png)
 
-*Wood started at 1. After spending it, Now reads 0 and Net reads −1.*
-
-![Saved Day 10 ledger with Older and Newer bumper prompts at 1.5×](docs/screenshots/0.4.2/saved-1p5x.png)
-
-*On this saved page, wood shows 2 earned and 1 spent. Last reads 2 and Net reads +1. The footer shows both paging directions.*
-
-Captured in Daybook 0.4.2 on Super Fantasy Kingdom 0.8.068 at 1920 × 1080 with a virtual Xbox-style controller.
+*The Undead ledger uses its own resource list. L1 and R1 page through saved days while the ledger is open.*
 
 ## Compatibility
 
 - The ledger follows both Human and Undead resource bars at UI scales 1× and 1.5×.
+- Save and Continue were checked on Windows game build 0.8.070 with 17 GKJ mods and five community mods enabled. Human restored a primary checkpoint and Undead restored a backup checkpoint. Both kept one history page with the saved totals after a later unsaved spend.
 - On Windows game build 0.8.068, the strip and ledger cleared the [Pin a Build Cost](https://thunderstore.io/c/super-fantasy-kingdom/p/GKJ/PinABuildCost/) upgrade, [Kingdom Charters](https://thunderstore.io/c/super-fantasy-kingdom/p/GKJ/KingdomCharters/) debt badge, and [Visitor Calendar](https://thunderstore.io/c/super-fantasy-kingdom/p/GKJ/VisitorCalendar/) prompt at both scales with [Production Bottlenecks](https://thunderstore.io/c/super-fantasy-kingdom/p/GKJ/ProductionBottlenecks/) enabled.
 - With ILM's [CheatMenu](https://thunderstore.io/c/super-fantasy-kingdom/p/ILM/CheatMenu/) 1.0.3 set to triple coin rewards, Daybook counted a 5-coin reward as 15 earned and a subsequent 2-coin purchase as 2 spent.
 - If you use ownlyme's [Tavern Food Priorities](https://thunderstore.io/c/super-fantasy-kingdom/p/ownlyme/TavernFoodPriorities/), the food rows show kingdom stock. Meals eaten from the tavern's private stores are outside those totals.
@@ -49,7 +44,7 @@ Captured in Daybook 0.4.2 on Super Fantasy Kingdom 0.8.068 at 1920 × 1080 with 
 
 Daybook keeps its journal under `%USERPROFILE%\AppData\LocalLow\Super Fantasy Games\Super Fantasy Kingdom\Daybook`, grouped by game profile, kingdom and run ID. Copy this folder along with your game saves when moving PCs. Daybook writes changed records every two seconds and flushes pending changes on a normal exit.
 
-A matching checkpoint, day and resource balance can restore the live record on Continue. After a forced close, recovery uses the last successful write. Saved pages retain rows for resources that later become unavailable.
+Continue uses the exact checkpoint selected by the game, including a backup when the game loads one. When the tavern advances the day, the saved totals replace later unsaved observations on that history page. Saved pages retain rows for resources that later become unavailable.
 
 ## Project layout
 

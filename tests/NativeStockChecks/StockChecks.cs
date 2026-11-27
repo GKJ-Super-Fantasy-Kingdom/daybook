@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
@@ -15,6 +16,99 @@ internal static class StockChecks
     private static ResourceManager stock;
     private static FaithManager faith;
     private static Type balance;
+    private static string savePath;
+    private const string HashlessPrimary = "{\"runID\":\"primary\",\"hash\":\"\",\"coins\":14}";
+    private const string HashlessBackup = "{\"runID\":\"backup\",\"hash\":\"\",\"coins\":11}";
+
+    private static bool UseFixtureSavePath(ref string __result)
+    {
+        __result = savePath;
+        return false;
+    }
+
+    private static void CheckSaveHook(Assembly daybook, Harmony patches)
+    {
+        var savePatch = daybook.GetType("Daybook.GameCheckpoints+Save", true);
+        patches.PatchAll(savePatch);
+        var save = patches.GetPatchedMethods().Single(method => method.DeclaringType == typeof(SaveManager));
+        var parameters = save.GetParameters().Select(parameter => parameter.ParameterType).ToArray();
+        var hasBackupFlag = parameters.SequenceEqual(new[] { typeof(string), typeof(string), typeof(bool) });
+        if ((!hasBackupFlag && !parameters.SequenceEqual(new[] { typeof(string), typeof(string) })) ||
+            Harmony.GetPatchInfo(save).Postfixes.Count(patch => patch.owner == patches.Id) != 1)
+            throw new Exception("Expected one Daybook postfix on the exact native save overload");
+
+        // Redirect only filename resolution. The installed game still writes and rotates the files.
+        var pathGetter = AccessTools.Method(typeof(SaveManager), "GetFilePath", new[] { typeof(string) });
+        patches.Patch(pathGetter, prefix: new HarmonyMethod(typeof(StockChecks), "UseFixtureSavePath"));
+        savePath = Path.Combine(Path.GetDirectoryName(daybook.Location), "1_human_game.data");
+        var manager = EmptyManager<SaveManager>();
+        File.WriteAllText(savePath, "first primary");
+        File.WriteAllText(savePath + ".bak", "older backup");
+        if (hasBackupFlag)
+        {
+            save.Invoke(manager, new object[] { "human_game", "second primary", false });
+            if (File.ReadAllText(savePath) != "second primary" || File.ReadAllText(savePath + ".bak") != "older backup")
+                throw new Exception("Save without backup changed the backup or failed to write");
+        }
+        save.Invoke(manager, hasBackupFlag
+            ? new object[] { "human_game", "saved with backup", true }
+            : new object[] { "human_game", "saved with backup" });
+        if (File.ReadAllText(savePath) != "saved with backup" ||
+            File.ReadAllText(savePath + ".bak") != (hasBackupFlag ? "second primary" : "first primary"))
+            throw new Exception("Native save backup rotation changed");
+        Console.WriteLine("PASS one checkpoint postfix on {0} and native primary/backup writes", save);
+        CheckReadHook(daybook, patches, manager);
+    }
+
+    // Embedded Mono has no Unity player. Stub only its JSON boundary, keeping the game's real disk and fallback methods.
+    private static bool ParseFixture(string json, Type type, ref object __result)
+    {
+        if (type != typeof(GameData)) return true;
+        if (json == HashlessPrimary || json == HashlessBackup)
+            __result = new GameData { version = 4, hash = "", runID = json == HashlessPrimary ? "primary" : "backup" };
+        else if (json == "legacy hashed fixture")
+            __result = new GameData { version = 4, hash = "legacy hash" };
+        else
+            throw new ArgumentException("Malformed native fixture");
+        return false;
+    }
+
+    private static void CheckReadHook(Assembly daybook, Harmony patches, SaveManager manager)
+    {
+        var hook = daybook.GetType("Daybook.GameCheckpoints", true);
+        foreach (var name in new[] { "ReadPayload", "SelectRead" })
+            patches.PatchAll(hook.GetNestedType(name, BindingFlags.Public | BindingFlags.NonPublic));
+        var parse = AccessTools.Method(typeof(UnityEngine.JsonUtility), "FromJson", new[] { typeof(string), typeof(Type) });
+        patches.Patch(parse, prefix: new HarmonyMethod(typeof(StockChecks), "ParseFixture"));
+        var selectedKey = AccessTools.Method(hook, "SelectedKey");
+        var key = AccessTools.Method(daybook.GetType("Daybook.Journal", true), "CheckpointKey");
+        File.WriteAllText(savePath, HashlessPrimary);
+        File.WriteAllText(savePath + ".bak", HashlessBackup);
+        var primary = manager.LoadGameData("human_game", true, true, false);
+        if (primary.runID != "primary" ||
+            !Equals(selectedKey.Invoke(null, new object[] { primary }), key.Invoke(null, new object[] { "", HashlessPrimary })))
+            throw new Exception("Native's selected hashless primary did not identify its exact payload");
+
+        File.WriteAllText(savePath, "malformed");
+        var backup = manager.LoadGameData("human_game", true, true, false);
+        if (backup.runID != "backup" ||
+            !Equals(selectedKey.Invoke(null, new object[] { backup }), key.Invoke(null, new object[] { "", HashlessBackup })) ||
+            Equals(selectedKey.Invoke(null, new object[] { primary }), selectedKey.Invoke(null, new object[] { backup })) ||
+            File.ReadAllText(savePath) != "malformed" || File.ReadAllText(savePath + ".bak") != HashlessBackup)
+            throw new Exception("Native fallback did not retain the selected backup's identity and bytes");
+
+        try
+        {
+            manager.LoadGameData("human_game", false, true, false);
+            throw new InvalidOperationException("Malformed fixture unexpectedly loaded with fallback disabled");
+        }
+        catch (ArgumentException) { }
+        File.WriteAllText(savePath, "legacy hashed fixture");
+        var legacy = manager.LoadGameData("human_game", true, true, false);
+        if (!Equals(selectedKey.Invoke(null, new object[] { legacy }), key.Invoke(null, new object[] { "legacy hash", null })))
+            throw new Exception("Native hashed checkpoint identity changed after a failed load");
+        Console.WriteLine("PASS native primary and fallback backup select their exact hashless payload; legacy keys remain readable");
+    }
 
     private static T EmptyManager<T>() { return (T)FormatterServices.GetUninitializedObject(typeof(T)); }
 
@@ -151,6 +245,7 @@ internal static class StockChecks
             stock = EmptyManager<ResourceManager>();
             faith = EmptyManager<FaithManager>();
             StatisticsManager.Instance = EmptyManager<StatisticsManager>();
+            CheckSaveHook(daybook, patches);
             AccessTools.Method(hooks, "Install").Invoke(null, new object[] { patches });
             signal.GetAddMethod(true).Invoke(null, new object[] { sample });
             ResourceManager.OnResourceAmountChanged += sample;

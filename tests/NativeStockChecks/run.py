@@ -60,7 +60,8 @@ def main():
         print("Testing packaged DLL SHA-256", hashlib.sha256(payload).hexdigest(), flush=True)
         dll.write_bytes(payload)
         refs = [managed / name for name in ("Assembly-CSharp.dll", "UnityEngine.dll", "UnityEngine.CoreModule.dll",
-                                            "UnityEngine.UI.dll", "UnityEngine.UIModule.dll", "netstandard.dll")]
+                                            "UnityEngine.JSONSerializeModule.dll", "UnityEngine.UI.dll",
+                                            "UnityEngine.UIModule.dll", "netstandard.dll")]
         refs.extend([core / "0Harmony.dll", core / "BepInEx.dll"])
         compiler = Path(os.environ["WINDIR"]) / "Microsoft.NET/Framework64/v4.0.30319/csc.exe"
         subprocess.run([str(compiler), "/nologo", f"/out:{exe}", *(f"/reference:{path}" for path in refs),

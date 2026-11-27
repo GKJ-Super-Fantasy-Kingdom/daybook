@@ -1,3 +1,9 @@
+## 0.4.4
+
+- Restore the saved day's resource totals when continuing from a primary or backup checkpoint in Super Fantasy Kingdom 0.8.070.
+- Keep the saved totals on one history page when the tavern advances to the next day.
+- Align the Older and Newer shortcuts symmetrically for keyboard, Xbox, and PlayStation controls.
+
 ## 0.4.3
 
 Clarify the mod’s description and compatibility for players.

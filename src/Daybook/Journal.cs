@@ -6,6 +6,7 @@ using System.Runtime.Serialization;
 using System.Runtime.Serialization.Json;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Daybook
 {
@@ -52,6 +53,7 @@ namespace Daybook
         [DataMember] internal int Version = 1;
         [DataMember] internal int Day;
         [DataMember] internal Dictionary<int, Balance> Rows = new Dictionary<int, Balance>();
+        [DataMember(EmitDefaultValue = false)] internal string Attempt;
 
         // Separate rows allow the same numeric slot to be reused by a different asset mid-day.
         [DataMember(EmitDefaultValue = false)] internal List<KeyValuePair<int, Balance>> Removed;
@@ -67,7 +69,7 @@ namespace Daybook
     internal sealed class Journal
     {
         private readonly string directory;
-        private readonly string current;
+        private string current;
         private readonly DataContractJsonSerializer format = new DataContractJsonSerializer(typeof(DayRecord));
         internal Journal(string root, int profile, int race, Guid run)
         {
@@ -118,10 +120,57 @@ namespace Daybook
                 return BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(json))).Replace("-", "");
         }
 
+        internal static string CheckpointKey(string nativeHash, string payload)
+        {
+            if (!string.IsNullOrEmpty(nativeHash)) return Fingerprint(nativeHash);
+            return string.IsNullOrEmpty(payload) ? null : "payload-" + Fingerprint(payload);
+        }
+
         private string Checkpoint(string fingerprint) => Path.Combine(directory, "save-" + fingerprint + ".json");
 
-        internal void SaveCheckpoint(string fingerprint, DayRecord record) => Write(Checkpoint(fingerprint), record);
+        internal void SaveCheckpoint(string fingerprint, DayRecord record)
+        {
+            string attempt = record.Attempt;
+            record.Attempt = Path.GetFileName(current);
+            try { Write(Checkpoint(fingerprint), record); }
+            finally { record.Attempt = attempt; }
+        }
+
         internal DayRecord LoadCheckpoint(string fingerprint) => Read(Checkpoint(fingerprint));
+
+        private string AttemptPath(DayRecord checkpoint) =>
+            checkpoint?.Attempt != null && Regex.IsMatch(checkpoint.Attempt, @"\Aday-[0-9]{19}-[0-9a-f]{32}\.json\z")
+                ? Path.Combine(directory, checkpoint.Attempt) : null;
+
+        // Reuse an unchanged attempt when Continue resumes the same checkpoint and day.
+        // A replay from an older checkpoint still has its own observational history.
+        internal void ResumeAttempt(DayRecord checkpoint, int day)
+        {
+            string path = AttemptPath(checkpoint);
+            if (path != null && checkpoint.Day == day && MatchesAttempt(path, checkpoint))
+                current = path;
+        }
+
+        // The tavern commits the next morning. Archive the exact saved day in its original page.
+        internal void FinalizeAttempt(string fingerprint, int day)
+        {
+            var checkpoint = LoadCheckpoint(fingerprint);
+            string path = AttemptPath(checkpoint);
+            if (path == null || checkpoint.Day != day || MatchesAttempt(path, checkpoint)) return;
+            checkpoint.Attempt = null;
+            Write(path, checkpoint);
+        }
+
+        private bool MatchesAttempt(string path, DayRecord checkpoint)
+        {
+            if (!File.Exists(path)) return false;
+            string attempt = checkpoint.Attempt;
+            using var stream = new MemoryStream();
+            checkpoint.Attempt = null;
+            try { format.WriteObject(stream, checkpoint); }
+            finally { checkpoint.Attempt = attempt; }
+            return stream.ToArray().SequenceEqual(File.ReadAllBytes(path));
+        }
 
         internal DayRecord Read(string path)
         {
